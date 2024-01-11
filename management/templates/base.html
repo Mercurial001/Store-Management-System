@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    {% load humanize %}
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <link rel="stylesheet" href="{% static 'clear_change_htmx.css' %}">
+    <link rel="stylesheet" href="{% static 'products.css' %}">
+    <link rel="stylesheet" href="{% static 'product-profile.css' %}">
+    <link rel="stylesheet" href="{% static 'font-awesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'reports.css' %}">
+    <link rel="stylesheet" href="{% static 'sold_out_products.css' %}">
+    <link rel="stylesheet" href="{% static 'inventory.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href='https://fonts.googleapis.com/css?family=Lato:100italic' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lato:100' rel='stylesheet' type='text/css'>
+    <script src="{% static 'jquery-3.7.1.min.js' %}"></script>
+    <script src="{% static 'htmx.js' %}"></script>
+</head>
+<body>
+    <header id="main-header">
+        <div class="main-header-link-container-div">
+            <a href="{% url 'homepage' %}">Home</a>
+        </div>
+        <div class="main-header-link-container-div">
+            <a href="{% url 'scanned-products' request.user %}">Scan Items</a>
+        </div>
+        <div class="main-header-link-container-div">
+            <a href="{% url 'select-sell' request.user %}">Select Products</a>
+        </div>
+        <div class="main-header-link-container-div">
+            <a href="{% url 'reports' %}">Reports</a>
+        </div>
+        <div class="main-header-link-container-div">
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+        </div>
+        <div class="main-header-link-container-div">
+            <a href="{% url 'products' %}">Products</a>
+        </div>
+        <div class="main-header-link-container-div" id="notification-toggle">
+            <div class="notification-counter-div">
+
+            </div>
+            Notification
+        </div>
+        {% csrf_token %}
+        <div class="notification-list" id="notification-list">
+            {% for notification in notifications %}
+                <div class="notification">
+                    <div class="notification-title">
+                        {{ notification.title }}
+                    </div>
+                    <div class="notification-date-time">
+                        {{ notification.date_time | naturaltime }}
+                    </div>
+                    <div class="notification-message">
+                        {{ notification.message }}
+                    </div>
+                    <div class="notification-delete-div">
+                        <a class="notification-delete"
+                           href="{% url 'delete-notification' notification.title notification.id %}">
+                            Remove Notification
+                        </a>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="notification-empty-notifier">
+                    No Notification
+                </div>
+            {% endfor %}
+        </div>
+        <div class="main-header-link-container-div">
+            <a href="{% url 'logout' %}">Logout</a>
+        </div>
+    </header>
+    <div class="username" id="username{{ request.user }}"></div>
+    <div class="base-block-content-container-div">
+        {% block content %}
+        <div class="inventory-forms-container-div">
+            {% if messages %}
+                {% for message in messages %}
+                    <div>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <div class="inventory-form-container-div">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="inventory-field-container-div">
+                        {{ product_form.name }}
+                    </div>
+                    <div class="inventory-field-container-div">
+                        <div>
+                            Product Type
+                        </div>
+                        <div>
+                            {{ product_form.type }}
+                        </div>
+                    </div>
+                    <div class="inventory-field-container-div">
+                        {{ product_form.barcode }}
+                    </div>
+                    <div class="inventory-field-container-div">
+                        {{ product_form.price }}
+                    </div>
+                    <div class="inventory-field-container-div">
+                        <div>
+                            Expiry Date
+                        </div>
+                        <div>
+                            {{ product_form.expiry_date }}
+                        </div>
+                    </div>
+                    <div class="inventory-field-container-div">
+                        {{ product_form.quantity }}
+                    </div>
+                    <div class="inventory-field-container-div">
+                        <div>
+                            Product Image
+                        </div>
+                        <div>
+                            {{ product_form.image }}
+                        </div>
+                    </div>
+                    <div class="inventory-field-container-div">
+                        <button class="inventory-btn" name="add-new-product-btn" type="submit">Submit</button>
+                    </div>
+                </form>
+            </div>
+            <div class="inventory-add-product-type-form-container-div">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div>
+                        {{ product_type_form.as_p }}
+                    </div>
+                    <button class="inventory-btn" name="add-new-product-type-btn" type="submit">Submit</button>
+                </form>
+            </div>
+        </div>
+
+        {% endblock %}
+    </div>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const notificationToggle = document.querySelector('#notification-toggle');
+            const notificationList = document.querySelector('.notification-list');
+
+            notificationToggle.addEventListener('click', () =>{
+                notificationList.classList.toggle('notification-list-show');
+                console.log('works');
+
+                fetch('/seen-notifications/')
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Notifications marked as seen:', data);
+                        // You can perform additional actions based on the response if needed
+                    })
+                    .catch(error => console.error('Error marking notifications as seen:', error));
+                    });
+        });
+
+        $(document).on('click', '.notification-delete', function() {
+            // Get notification details from the data attributes
+            var title = $(this).data('title');
+            var id = $(this).data('id');
+            var deleteUrl = '/delete-notification/' + title + '/' + id + '/';
+
+            // Make an AJAX request to remove the notification
+            $.ajax({
+                url: deleteUrl,
+                type: 'POST',
+                data: {title: title, id: id, csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val() },
+                dataType: 'json',
+                success: function(response) {
+                    console.log(response.message);
+                    // Remove the notification from the UI if removal is successful
+                    $(this).closest('.notification').remove();
+                },
+                error: function(error) {
+                    console.error('Failed to remove notification', error);
+                }
+            });
+        });
+
+        setInterval(function() {
+            $.ajax({
+                url: '{% url "expired-products-json" %}',
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    var expiredProducts = response.expired_products;
+                    var expiringProducts = response.expiring_products;
+                    var notifications = response.notification;
+                    $('.notification-counter-div').empty();
+
+                    $('#notification-list').empty();
+
+                    if (notifications.length === 0) {
+                        var emptyNotifier =
+                        `
+                            <div class="notification-empty-notifier">
+                                No Notification
+                            </div>
+                        `;
+                        $('#notification-list').html(emptyNotifier);
+                    } else {
+                        for (var i = 0; i < notifications.length; i++) {
+                            var notification = notifications[i];
+                            var notificationCounter =
+                            `
+                                <div class="notification-counter">
+                                    ${notification.unseen}
+                                </div>
+                            `;
+                            var notificationHtml =
+                            `
+                                <div class="notification">
+                                    <div class="notification-title">
+                                        ${notification.title}
+                                    </div>
+                                    <div class="notification-date-time">
+                                        ${notification.time}
+                                    </div>
+                                    <div class="notification-message">
+                                        ${notification.message}
+                                    </div>
+                                    <div class="notification-delete-div">
+                                        <a class="notification-delete" data-title="${notification.title}" data-id="${notification.id}">
+                                            Remove Notification
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                            if (notification.unseen !== null) {
+                                $('.notification-counter-div').append(notificationCounter)
+                            } else {
+                                $('.notification-counter-div').empty();
+                            };
+                            $('#notification-list').append(notificationHtml);
+                        }
+                    }
+                }
+            });
+        }, 1000);
+    </script>
+</body>
+</html>
+
+
+<!--                    // Update the div with the new products-->
+<!--                    for (var i = 0; i < expiredProducts.length; i++) {-->
+<!--                        var product = expiredProducts[i];-->
+<!--                        var expiredProductHtml = '<p>' + product.name + '</p>';-->
+<!--                        $('#notification-list').append(expiredProductHtml);-->
+<!--                    }-->
+<!--                    for (var i = 0; i < expiringProducts.length; i++) {-->
+<!--                        var product = expiringProductss[i];-->
+<!--                        var expiringProductHtml = '<p>' + product.name + '</p>';-->
+<!--                        $('#notification-list').append(expiringProductHtml);-->
+<!--                    }-->
+
+
+<!--        setInterval(function() {-->
+<!--            $.ajax({-->
+<!--                url: '{% url "expired-products-json" %}',-->
+<!--                type: 'GET',-->
+<!--                dataType: 'json',-->
+<!--                success: function(response) {-->
+<!--                    var expiredProducts = response.expired_products;-->
+<!--                    var expiringProducts = response.expiring_products-->
+<!--                    // Clear the existing content of the div-->
+<!--                    $('#notification-list').empty();-->
+<!--                    // Update the div with the new products-->
+<!--                    for (var i = 0; i < expiredProducts.length; i++) {-->
+<!--                        var product = products[i];-->
+<!--                        var expiredProductHtml = '<p>' + 'Expired Products' + product.name + '</p>';-->
+
+<!--                        $('#notification-list').append(expiredProductHtml);-->
+<!--                    }-->
+
+<!--                    for (var i = 0; i < expiringProducts.length; i++) {-->
+<!--                        var product = products[i];-->
+<!--                        var expiredProductHtml = '<p>' + 'Products Nearing Expiration' + product.name + '</p>';-->
+
+<!--                        $('#notification-list').append(expiredProductHtml);-->
+<!--                    }-->
+<!--                }-->
+<!--            });-->
+<!--        }, 5000);-->

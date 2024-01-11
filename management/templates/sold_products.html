@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+    <div>
+        {% for products in sold_products %}
+            <div style="
+                border: 1px solid rgb(10, 40, 40);
+                margin: auto;
+                width: 30%;
+                margin-top: 10px;
+                margin-bottom: 10px;
+                ">
+                <table>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity Sold</th>
+                        <th style="visibility:hidden">
+                            awdawd
+                        </th>
+                        <th>Price</th>
+                        <th></th>
+                    </tr>
+                    {% for product in products.product.all %}
+                        <tr>
+                            <td>
+                                {{ product.name }}
+                            </td>
+                            <td style="text-align: center;">
+                                {{ product.sold_quantity }}
+                            </td>
+                            <td style="text-align: center;">
+                                x
+                            </td>
+                            <td style="text-align: center;">
+                                {{ product.price }}
+                            </td>
+                            <td>
+                                =
+                            </td>
+                            <td style="text-align: center;">
+                                {{ product.multiply }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan="3">Date Sold: {{ products.date_sold_no_time }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">Serial Number: {{ products.id }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">Cash: {{ products.cash }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">Change: {{ products.change }}</td>
+                    </tr>
+                    <tr>
+                        <td>Total Price</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td style="text-align: right;">{{ products.total_price }}</td>
+                    </tr>
+                </table>
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}

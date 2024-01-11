@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+    <script src="{% static 'chart.umd.js' %}"></script>
+    <section id="graphs-section">
+        <div class="graph-div">
+            <div class="analytics-box-div">
+                <form action="{% url 'dashboard' %}" method="GET">
+                    <div class="dashboard-graph-filter-div">
+                        <input type="month" id="monthPicker" name="selected-month" value="{{ default_date|date:'Y-m' }}">
+                    </div>
+                    <div class="dashboard-graph-filter-div">
+                        <select name="type-filter" id="sold-product-type-select">
+                            {% for type in product_type %}
+                                <option value="{{ type.product_type }}">{{ type.product_type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="dashboard-graph-filter-div">
+                        <select name="cashier-branch-filter" id="sold-products-cashier-branch-select">
+                            {% for user in users %}
+                                <option value="{{ user.username }}">{{ user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="dashboard-graph-filter-div">
+                        <button type="submit">Filter</button>
+                    </div>
+                </form>
+                {% if selected_type_sold_product %}
+                    {{ selected_type_sold_product }}
+                    {{ selected_month_sold_product }}
+                    {{ selected_cashier_sold_product}}
+                    <canvas id="SoldPerProductsChartFiltered" width="1050" height="500"></canvas>
+                    <canvas id="ProductsSoldDailyChartFiltered" width="1050" height="500"></canvas>
+                {% elif not selected_type_sold_product %}
+                    <canvas id="SoldPerProductsChart" width="1050" height="500"></canvas>
+                    <canvas id="ProductsSoldDailyChart" width="1050" height="500"></canvas>
+                {% endif %}
+
+            </div>
+            <div class="analytics-box-div">
+
+            </div>
+        </div>
+    </section>
+    <script>
+
+        // Define your data and labels
+
+        var product_name = {{ summed_products_products|safe }};
+        var summed_sold_product = {{ summed_products_quantities|safe }};
+
+        var ctx = document.getElementById('SoldPerProductsChart').getContext('2d');
+
+        var data = {
+          labels: product_name,
+          datasets: [{
+            label: 'Sold Products',
+            data: summed_sold_product,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        };
+
+        var myBarChartSoldProduct = new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+            scales: {
+                x: {
+                    grid: {
+                        drawOnChartArea: false
+                        },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                }
+            }
+          }
+        });
+
+        // Define your data and labels
+
+        var date_sold = {{ product_sold_date|safe }};
+        var products_sold = {{ summed_sold_products_quantities|safe }};
+
+        var dailyProductsSoldChart = document.getElementById('ProductsSoldDailyChart').getContext('2d');
+
+        var data = {
+          labels: date_sold,
+          datasets: [{
+            label: 'Sales',
+            data: products_sold,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        };
+
+        var myBarChartDailySale = new Chart(dailyProductsSoldChart, {
+            type: 'line',
+            data: data,
+            options: {
+            scales: {
+                x: {
+                    grid: {
+                        drawOnChartArea: false
+                        },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                }
+            }
+          }
+        });
+
+    </script>
+    <script>
+        // Define your data and labels
+
+        var product_name_filtered = {{ summed_products_products_filtered|safe }};
+        var summed_sold_product_filtered = {{ summed_products_quantities_filtered|safe }};
+
+        var ctx_filtered = document.getElementById('SoldPerProductsChartFiltered').getContext('2d');
+
+        var data_filtered = {
+          labels: product_name_filtered,
+          datasets: [{
+            label: 'Sold Products (Filtered)',
+            data: summed_sold_product_filtered,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        };
+
+        var myBarChartFiltered = new Chart(ctx_filtered, {
+            type: 'bar',
+            data: data_filtered,
+            options: {
+            scales: {
+                x: {
+                    grid: {
+                        drawOnChartArea: false
+                        },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                }
+            }
+          }
+        });
+
+        var date_sold_filtered = {{ product_sold_date_filtered|safe }};
+        var products_sold_filtered = {{ summed_sold_products_quantities_filtered|safe }};
+
+        var dailyProductsSoldChart = document.getElementById('ProductsSoldDailyChartFiltered').getContext('2d');
+
+        var data = {
+          labels: date_sold_filtered,
+          datasets: [{
+            label: 'Sales (Filtered)',
+            data: products_sold_filtered,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        };
+
+        var myBarChartDailySale = new Chart(dailyProductsSoldChart, {
+            type: 'line',
+            data: data,
+            options: {
+            scales: {
+                x: {
+                    grid: {
+                        drawOnChartArea: false
+                        },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                }
+            }
+          }
+        });
+    </script>
+{% endblock %}
+
+
+
+<!--                <form action="{% url 'dashboard' %}" method="post">-->
+<!--                    {% csrf_token %}-->
+<!--                    <div class="dashboard-graph-filter-div">-->
+<!--                        <input type="month" id="monthPickerDailySales" name="selected-month-sold-product" value="{{ default_date|date:'Y-m' }}">-->
+<!--                    </div>-->
+<!--                    <div class="dashboard-graph-filter-div">-->
+<!--                        <select name="product-type" id="select-product-type">-->
+<!--                            {% for type in product_type %}-->
+<!--                                <option value="{{ type.product_type }}">{{ type.product_type }}</option>-->
+<!--                            {% endfor %}-->
+<!--                        </select>-->
+<!--                    </div>-->
+<!--                    <div class="dashboard-graph-filter-div">-->
+<!--                        <select name="daily-sales-cashier-branch-filter" id="daily-sales-cashier-branch-select">-->
+<!--                            {% for user in users %}-->
+<!--                                <option value="{{ user.id }}">{{ user.username }}</option>-->
+<!--                            {% endfor %}-->
+<!--                        </select>-->
+<!--                    </div>-->
+<!--                    <div class="dashboard-graph-filter-div">-->
+<!--                        <button type="submit">Filter</button>-->
+<!--                    </div>-->
+<!--                </form>-->
+

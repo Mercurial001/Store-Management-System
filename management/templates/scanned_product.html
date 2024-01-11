@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <section class="scanned-products-utmost-container-section">
+        <div class="username" id="username{{ request.user }}">{{ barcode_data }}</div>
+        <div class="scanned-products-products-scanned-list">
+            <div class="scanned-products-container" id="scanned-products-container">
+                <div class="scanned-products-scanned-product">
+                    <div class="scanned-products-scanned-product-label-container-div">
+                        Product Name:
+                    </div>
+                    <div class="scanned-products-scanned-product-detail">
+                        {{ scanned_product_header.name }}
+                    </div>
+                    <div class="scanned-products-scanned-product-label-container-div">
+                        Barcode:
+                    </div>
+                    <div class="scanned-products-scanned-product-detail">
+                        {{ scanned_product_header.barcode }}
+                    </div>
+                    <div class="scanned-products-scanned-product-label-container-div">
+                        Price:
+                    </div>
+                    <div class="scanned-products-scanned-product-detail">
+                        {{ scanned_product_header.price }}
+                    </div>
+                    <div class="scanned-products-scanned-product-label-container-div">
+                        Expiry Date:
+                    </div>
+                    <div class="scanned-products-scanned-product-detail">
+                        {{ scanned_product_header.expiry_date }}
+                    </div>
+                    <div>
+                        <a href="{% url 'sell-scanned-products' request.user %}">Sell</a>
+                    </div>
+                </div>
+                <div class="scanned-products-table-container-div">
+                    {% for products in scanned_products %}
+                        <div class="scanned-products-total-price-container-div">
+                            {{ products.summed_product_price }}
+                        </div>
+                    {% endfor %}
+                    <div class="table">
+                        <table>
+                           {% for products in scanned_products %}
+                                <tr class="scanned-products-table-row">
+                                    <th class="scanned-products-table-head" id="scanned-products-table-head-name">
+                                        Name
+                                    </th>
+                                    <th class="scanned-products-table-head" id="scanned-products-table-head-quantity">
+                                        Quantity
+                                    </th>
+                                    <th class="scanned-products-table-head" id="scanned-products-table-head-price">
+                                        Price
+                                    </th>
+                                </tr>
+                                {% for product in products.product.all %}
+                                    <tr class="scanned-products-table-row">
+                                        <td class="scanned-products-table-data" id="scanned-products-table-data-name">
+                                            <a href="{% url 'remove-product' request.user product.barcode %}">
+                                                {{ product.name }}
+                                            </a>
+                                        </td>
+                                        <td class="scanned-products-table-data" id="scanned-products-table-data-quantity">
+                                            <div class="scanned-products-add-quantity-element">
+                                                <a id="scanned-products-quantity-anchor{{ product.id }}"
+                                                   href="{% url 'add-quantity' request.user product.barcode %}">
+                                                    {{ product.scanned_quantity }}
+                                                </a>
+                                            </div>
+                                            <div class="scanned-products-add-quantity-element">
+                                                <form method="post" class="scanned-products-add-quantity-form"
+                                                      id="scanned-products-form{{ product.id }}">
+                                                    {% csrf_token %}
+                                                    <div>
+                                                        <input type="hidden"
+                                                               name="barcode"
+                                                               id="id_barcode"
+                                                               value="{{ product.barcode }}"
+                                                        >
+                                                    </div>
+                                                    <div>
+                                                        {{ add_quantity_form.scanned_quantity }}
+                                                    </div>
+                                                    <div class="scanned-products-add-quantity-btn-div">
+                                                        <button name="scanned-products-add-quantity-btn" type="submit">
+                                                            Submit
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <div class="scanned-products-add-quantity-element">
+                                                <button class="scanned-products-add-quantity-form-toggle-btn"
+                                                        id="toggleBtn{{ product.id }}">
+                                                    +
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td class="scanned-products-table-data" id="scanned-products-table-data-price">
+                                            {{ product.multiply }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="scanned-products-barcode-camera-scanner-container-div">
+                <img alt="Barcode Camera" src="{% url 'scanning' request.user %}" id="barcode-camera">
+            </div>
+        </div>
+    </section>
+    <div id="scanned-products-test-div">
+
+    </div>
+    <script>
+        setInterval(function() {
+            $.ajax({
+                url: '{% url "scanned-products" user.username %}',  // Update with your actual URL
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        console.log(response.success);  // Log the success message
+                        location.reload()
+                    }
+                },
+            });
+        }, 500);
+
+        const toggleBtns = document.querySelectorAll('.scanned-products-add-quantity-form-toggle-btn');
+
+        toggleBtns.forEach(function(toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                productId = toggleBtn.id.replace('toggleBtn', '');
+
+                addQuantityForm = document.getElementById(`scanned-products-form${productId}`);
+                scannedProductsQuantity = document.getElementById(`scanned-products-quantity-anchor${productId}`);
+
+                addQuantityForm.classList.toggle('scanned-products-show-add-quantity-form');
+                scannedProductsQuantity.classList.toggle('scanned-products-blot-quantity');
+
+                console.log('works');
+
+                toggleBtns.forEach(otherButton => {
+                    if (otherButton !== toggleBtn) {
+                        const otherBookId = otherButton.id.replace('toggleBtn', '');
+                        const otherBookDetailsElement = document.getElementById(`scanned-products-form${otherBookId}`);
+                        const otherScannedProductsQuantity = document.getElementById(`scanned-products-quantity-anchor${otherBookId}`);
+
+                        otherBookDetailsElement.classList.remove('scanned-products-show-add-quantity-form');
+                        otherScannedProductsQuantity.classList.remove('scanned-products-blot-quantity');
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,72 @@
+.inventory-forms-container-div{
+    margin: auto;
+    width: 70%;
+    font-family: 'Montserrat';
+    margin-top: 50px;
+}
+
+.inventory-form-container-div{
+    float: left;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.inventory-field-container-div{
+    margin: 20px;
+    text-align: center;
+}
+
+.product-inventory-field{
+    width: 95%;
+    margin: auto;
+    height: 30px;
+    border-radius: 5px;
+    border: 1px solid rgb(180, 180, 180);
+}
+
+.product-inventory-field:focus{
+    outline: none;
+}
+
+.inventory-add-product-type-form-container-div{
+    float: right;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.add-product-type-field{
+    width: 95%;
+    margin: auto;
+    height: 30px;
+    border-radius: 5px;
+    border: 1px solid rgb(180, 180, 180);
+}
+
+.inventory-btn{
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 15px;
+    padding-right: 15px;
+    border: 1px solid rgb(180, 180, 180);
+    background-color: rgb(10, 50, 50);
+    color: beige;
+    border-radius: 5px;
+    font-family: 'Montserrat';
+    cursor: pointer;
+    transition: 0.6s all;
+}
+
+.inventory-btn:hover{
+    background-color: rgb(60, 120, 120, 0.5);
+}
+
+.inventory-btn:active{
+    background-color: rgb(60, 120, 120, 0.5);
+}
+
+.add-product-type-field:focus{
+    outline: none;
+}
