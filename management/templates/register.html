@@ -2,8 +2,11 @@
 
 {% block content %}
     <section class="registration-form-section">
-        <p class="title-header" id="register-title">REGISTER</p>
-        <article class="article-form">
+        <div id="registration-heading-div">
+            <h1>REGISTRATION</h1>
+        </div>
+
+        <article id="registration-form">
             <form method="POST" action="">
                 {% csrf_token %}
                 <div>
@@ -33,16 +36,14 @@
                       </ul>
                     {% endif %}
                 </div>
-                <button class="register-btn">Submit</button>
+                <button id="register-btn">Register</button>
                 <!--                <div class="register-error-message">-->
                 <!--                    {{ form.errors }}-->
                 <!--                </div>-->
             </form>
-            <div class="link-register">
+            <div id="registration-login-link">
                 <a href="{% url 'login' %}">
-                    <div class="link-register-container">
-                        <p class="link-text">Already Have an Account?</p>
-                    </div>
+                    <p class="link-text">Already Have an Account?</p>
                 </a>
             </div>
         </article>

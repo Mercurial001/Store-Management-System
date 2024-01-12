@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="{% static 'sold_out_products.css' %}">
     <link rel="stylesheet" href="{% static 'inventory.css' %}">
     <link rel="stylesheet" href="{% static 'authentication.css' %}">
+    <link rel="stylesheet" href="{% static 'register.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link href='https://fonts.googleapis.com/css?family=Lato:100italic' rel='stylesheet' type='text/css'>
     <link href='https://fonts.googleapis.com/css?family=Lato:100' rel='stylesheet' type='text/css'>
@@ -22,6 +23,7 @@
 </head>
 <body>
     <header id="main-header">
+        {% if request.user.is_authenticated %}
         <div class="main-header-link-container-div">
             <a href="{% url 'homepage' %}">Home</a>
         </div>
@@ -75,6 +77,11 @@
         <div class="main-header-link-container-div">
             <a href="{% url 'logout' %}">Logout</a>
         </div>
+        {% else %}
+        <div class="main-header-link-container-div">
+            <a href="{% url 'login' %}">Login</a>
+        </div>
+        {% endif %}
     </header>
     <div class="username" id="username{{ request.user }}"></div>
     <div class="base-block-content-container-div">
