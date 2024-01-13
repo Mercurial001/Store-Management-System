@@ -535,7 +535,7 @@ body{
     z-index: 10;
     margin-top: -50px;
     width: 400px;
-    margin-left: 50px;
+    margin-left: 60px;
 }
 
 .select-sell-submit-selected-btn-div{
@@ -584,14 +584,6 @@ body{
     display: inline;
 }
 
-.select-sell-sell-form-section{
-    float: left;
-    padding: 5px;
-    width: 100px;
-    margin: 5px;
-    border-radius: 5px;
-}
-
 .select-sell-products-toggle-btn-container-div{
     margin-top: 60px;
 }
@@ -628,6 +620,17 @@ body{
     padding-left: 20px;
 }
 
+.select-sell-sell-form-section{
+    float: left;
+    position:fixed;
+    padding: 5px;
+    width: 300px;
+    margin-top: 450px;
+    margin-left: 120px;
+    border-radius: 5px;
+    text-align: center;
+}
+
 #select-sell-sell-products-btn{
     background-color: rgb(200, 200, 200);
     color: rgb(20, 20, 20);
@@ -641,7 +644,7 @@ body{
     box-shadow: rgb(0, 0, 0) 0px 1px 8px;
     cursor: pointer;
     margin-top: 5px;
-    width: 100%;
+    width: 85%;
 }
 
 .select-sell-cash-input-field{
