@@ -106,12 +106,12 @@
                             hx-swap="innerHTML">
                         Submit Selected</button>
                 </div>
-                <div class="select-sell-selected-products-array-div">
-                    <div id="selectedProductNames"></div>
-                </div>
             </div>
         </div>
         <div class="select-sell-products-toggle-btn-container-div">
+            <div class="select-sell-selected-products-array-div">
+                <div id="selectedProductNames"></div>
+            </div>
             {% for type, products in product_types_list.items %}
                 <div class="select-sell-product-toggle-btn"
                         id="select-sell-product-toggle-div{{ type.id }}">

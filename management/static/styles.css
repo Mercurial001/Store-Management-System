@@ -373,6 +373,7 @@ body{
 
 .selected-sell-selected-products-list{
     float: left;
+    position:fixed;
 }
 
 .select-sell-product-container-div{
@@ -513,16 +514,9 @@ body{
     border-radius: 5px;
 }
 
-.select-sell-submit-selected-btn-div{
-    display: none;
-}
-
-.select-sell-submit-selected-btn-div-show{
-    display: block;
-}
-
 .select-sell-selected-products-array-div{
     display: none;
+    margin-left: 50px;
 }
 
 .select-sell-selected-products-array-div-show{
@@ -534,6 +528,22 @@ body{
     vertical-align: top;
     margin-left: 10px;
     margin-right: 10px;
+}
+
+.select-sell-form-operator-container-div{
+    position: fixed;
+    z-index: 10;
+    margin-top: -50px;
+    width: 400px;
+    margin-left: 50px;
+}
+
+.select-sell-submit-selected-btn-div{
+    display: none;
+}
+
+.select-sell-submit-selected-btn-div-show{
+    display: block;
 }
 
 .select-sell-select-more-products-div{
@@ -582,9 +592,12 @@ body{
     border-radius: 5px;
 }
 
-.select-sell-form-operator-container-div{
-    margin-top: 20px;
-    margin-bottom: 20px;
+.select-sell-products-toggle-btn-container-div{
+    margin-top: 60px;
+}
+
+.select-sell-products-type-container-div{
+    margin-top: 60px;
 }
 
 #selected-product-select-sell{
