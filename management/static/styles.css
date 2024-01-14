@@ -493,6 +493,11 @@ body{
     position: absolute;
     font-family: 'Montserrat';
     text-align: center;
+    display: none;
+}
+
+.select-sell-product-quantity-input-container-div-show{
+    display: block;
 }
 
 .select-sell-quantity-input:focus{

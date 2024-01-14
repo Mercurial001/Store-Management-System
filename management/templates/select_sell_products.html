@@ -66,7 +66,7 @@
             element.classList.toggle('selected', checkbox.checked);
 
             quantityField.classList.toggle('selected');
-
+            quantityField.classList.toggle('select-sell-product-quantity-input-container-div-show');
             // Set the value of the quantity input based on the checkbox state
             quantityInput.value = checkbox.checked ? 1 : '';
 
@@ -140,6 +140,7 @@
                 button.addEventListener('click', ()=> {
                     const typeId = button.id.replace('select-sell-product-toggle-div', '');
                     const productContainerDiv = document.getElementById(`select-sell-product-container-div${typeId}`);
+
                     const submitSelectedBtn = document.querySelector('.select-sell-submit-selected-btn-div');
                     const toggleBtnsContainer = document.querySelector('.select-sell-products-toggle-btn-container-div');
                     const selectProductBtn = document.querySelector('.select-sell-select-more-products-div');
