@@ -140,22 +140,6 @@ body{
     letter-spacing: 2px;
 }
 
-/* dashboard.html */
-
-.graph-div{
-    display:inline-block;
-    background-color: rgb(220,220,220);
-    background-color: rgb(220,220,220);
-    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
-    border-radius:3px;
-    margin-top:14px;
-    margin-left:14px;
-}
-
-.dashboard-graph-filter-div{
-    display: inline-block;
-}
-
 /* scanned_product.html */
 
 .scanned-products-utmost-container-section{

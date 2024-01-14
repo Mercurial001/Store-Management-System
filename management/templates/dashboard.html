@@ -7,32 +7,63 @@
     <section id="graphs-section">
         <div class="graph-div">
             <div class="analytics-box-div">
-                <form action="{% url 'dashboard' %}" method="GET">
-                    <div class="dashboard-graph-filter-div">
-                        <input type="month" id="monthPicker" name="selected-month" value="{{ default_date|date:'Y-m' }}">
-                    </div>
-                    <div class="dashboard-graph-filter-div">
-                        <select name="type-filter" id="sold-product-type-select">
-                            {% for type in product_type %}
-                                <option value="{{ type.product_type }}">{{ type.product_type }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="dashboard-graph-filter-div">
-                        <select name="cashier-branch-filter" id="sold-products-cashier-branch-select">
-                            {% for user in users %}
-                                <option value="{{ user.username }}">{{ user.username }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="dashboard-graph-filter-div">
-                        <button type="submit">Filter</button>
-                    </div>
-                </form>
+                <div id="dashboard-filter-form-container-div">
+                    <form action="{% url 'dashboard' %}" method="GET">
+                        <div class="dashboard-graph-filter-div">
+                            <input class="dashboard-filter-field-input"
+                                   type="month"
+                                   id="monthPicker"
+                                   name="selected-month"
+                                   value="{{ default_date|date:'Y-m' }}">
+                        </div>
+                        <div class="dashboard-graph-filter-div">
+                            <select class="dashboard-filter-field-input" name="type-filter" id="sold-product-type-select">
+                                {% for type in product_type %}
+                                    <option value="{{ type.product_type }}">{{ type.product_type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="dashboard-graph-filter-div">
+                            <select class="dashboard-filter-field-input"
+                                    name="cashier-branch-filter"
+                                    id="sold-products-cashier-branch-select">
+                                {% for user in users %}
+                                    <option value="{{ user.username }}">{{ user.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="dashboard-graph-filter-div">
+                            <button id="dashboard-filter-btn" type="submit">
+                                Filter
+                                <i class="fa fa-filter"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
                 {% if selected_type_sold_product %}
-                    {{ selected_type_sold_product }}
-                    {{ selected_month_sold_product }}
-                    {{ selected_cashier_sold_product}}
+                    <div id="dashboard-filters-filter-display-div">
+                        <span class="dashboard-filter-applied-div">
+                            Filters Applied:
+                        </span>
+                        <span class="dashboard-filter-applied-div">
+                            Product Type:
+                        </span>
+                        <span class="dashboard-the-filter">
+                            {{ selected_type_sold_product }}
+                        </span>
+                        <span class="dashboard-filter-applied-div">
+                            Date:
+                        </span>
+                        <span class="dashboard-the-filter">
+                            {{ selected_month_sold_product }}
+                        </span>
+                        <span class="dashboard-filter-applied-div">
+                            User:
+                        </span>
+                        <span class="dashboard-the-filter">
+                            {{ selected_cashier_sold_product }}
+                        </span>
+                    </div>
                     <canvas id="SoldPerProductsChartFiltered" width="1050" height="500"></canvas>
                     <canvas id="ProductsSoldDailyChartFiltered" width="1050" height="500"></canvas>
                 {% elif not selected_type_sold_product %}
