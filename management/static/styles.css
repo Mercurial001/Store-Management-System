@@ -34,6 +34,7 @@ body{
 /* base.html */
 
 #main-header{
+    z-index: 100;
     width: 18%;
     float: left;
     background-color: rgb(10, 40, 40);
@@ -90,6 +91,7 @@ body{
 
 .notification-list-show{
     visibility: visible;
+    z-index: 1000000;
 }
 
 .notification{
@@ -374,6 +376,7 @@ body{
 .selected-sell-selected-products-list{
     float: left;
     position:fixed;
+    z-index: 1;
 }
 
 .select-sell-product-container-div{

@@ -18,6 +18,8 @@ from datetime import datetime, timedelta
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from datetime import date
 from django.db.models import Q
+from .decorators import unauthenticated_user
+from django.contrib.auth.decorators import login_required
 
 
 @login_required(login_url='login')
@@ -86,6 +88,7 @@ def index(request):
     })
 
 
+@login_required(login_url='login')
 def dashboard(request):
     default_date = date.today()
     users = User.objects.all()
@@ -237,6 +240,7 @@ def dashboard(request):
     })
 
 
+
 @unauthenticated_user
 def authentication(request):
     notifications = Notification.objects.filter(removed=False)
@@ -306,6 +310,7 @@ def logout_user(request):
 barcode_data = ''
 
 
+@login_required(login_url='login')
 @gzip.gzip_page
 def scan_barcodes(request, username):
     def generate():
@@ -373,6 +378,7 @@ def scan_barcodes(request, username):
     return response
 
 
+@login_required(login_url='login')
 def scanning_products(request, username):
     notifications = Notification.objects.filter(removed=False)
     user = User.objects.get(username=username)
@@ -455,6 +461,7 @@ def scanning_products(request, username):
     })
 
 
+@login_required(login_url='login')
 def update_scanned_products(request, username):
     cashier = User.objects.get(username=username)
     scanned_products = ScannedProducts.objects.filter(cashier=cashier)
@@ -474,6 +481,7 @@ def update_scanned_products(request, username):
     return JsonResponse({'products': product_list})
 
 
+@login_required(login_url='login')
 def add_quantity_product(request, username, barcode):
 
     user = User.objects.get(username=username)
@@ -500,6 +508,7 @@ def add_quantity_product(request, username, barcode):
         return redirect('scanned-products', username=user.username)
 
 
+@login_required(login_url='login')
 def subtract_quantity_product(request, username, barcode):
     user = User.objects.get(username=username)
 
@@ -525,6 +534,7 @@ def subtract_quantity_product(request, username, barcode):
         return redirect('scanned-products', username=user.username)
 
 
+@login_required(login_url='login')
 def remove_scanned_product(request, username, barcode):
     user = User.objects.get(username=username)
 
@@ -550,6 +560,7 @@ def remove_scanned_product(request, username, barcode):
         return redirect('scanned-products', username=user.username)
 
 
+@login_required(login_url='login')
 def sell_scanned_products(request, username):
     user = User.objects.get(username=username)
 
@@ -678,6 +689,7 @@ def sell_scanned_products(request, username):
     })
 
 
+@login_required(login_url='login')
 def add_dynamic_products(request, username):
     user = User.objects.get(username=username)
     products = Product.objects.all()
@@ -695,6 +707,7 @@ def add_dynamic_products(request, username):
     return redirect('homepage')
 
 
+@login_required(login_url='login')
 def products_sold(request):
     notifications = Notification.objects.filter(removed=False)
     sold_products = SoldProducts.objects.all().order_by('-date_sold')
@@ -704,6 +717,7 @@ def products_sold(request):
     })
 
 
+@login_required(login_url='login')
 def expired_products(request):
     notifications = Notification.objects.filter(removed=False)
     current_date = timezone.now()
@@ -723,6 +737,7 @@ def expired_products(request):
     })
 
 
+@login_required(login_url='login')
 def reports(request):
     notifications = Notification.objects.filter(removed=False)
     return render(request, 'reports.html', {
@@ -730,6 +745,7 @@ def reports(request):
     })
 
 
+@login_required(login_url='login')
 def sold_out_products(request):
     notifications = Notification.objects.filter(removed=False)
     products = SoldOutProduct.objects.all()
@@ -739,6 +755,7 @@ def sold_out_products(request):
     })
 
 
+@login_required(login_url='login')
 def select_products_sell(request, username):
     notifications = Notification.objects.filter(removed=False)
     cashier = User.objects.get(username=username)
@@ -793,8 +810,10 @@ def select_products_sell(request, username):
     })
 
 
+@login_required(login_url='login')
 def expired_products_json(request):
     product_main = Product.objects.filter(quantity__lte=0)
+    running_low_products = Product.objects.filter(quantity__lte=4)
     for product in product_main:
         sold_out_product = SoldOutProduct.objects.create(
             name=product.name,
@@ -812,6 +831,18 @@ def expired_products_json(request):
 
         sold_out_product.save()
         product.delete()
+
+    for product in running_low_products:
+        if product.quantity == 1:
+            quantity_dynamic_word = 'quantity'
+        else:
+            quantity_dynamic_word = 'quantities'
+        depletion_notification, created = Notification.objects.get_or_create(
+            title=f'Product Nearing Depletion: {product.name}',
+            message=f'This is to notify you that the product, "{product.name}" has only {product.quantity} {quantity_dynamic_word} left in stock.',
+            identifier=f'Product Nearing Depletion Identifier: {product.name}-{product.id}-{product.quantity}-{product.barcode}'
+        )
+        depletion_notification.save()
 
     dynamic_products = CashierDynamicProducts.objects.filter(quantity__lte=0)
     for dynamic_product in dynamic_products:
@@ -891,6 +922,7 @@ def expired_products_json(request):
     })
 
 
+@login_required(login_url='login')
 def remove_notification(request, title, id):
     notification = Notification.objects.get(title=title, id=id)
     notification.removed = True
@@ -900,6 +932,7 @@ def remove_notification(request, title, id):
     return JsonResponse({'message': 'Notification removed successfully'})
 
 
+@login_required(login_url='login')
 def seen_notifications(request):
     try:
         notifications = Notification.objects.all()
@@ -918,6 +951,7 @@ def seen_notifications(request):
         return JsonResponse({'status': 'error', 'message': str(e)})
 
 
+@login_required(login_url='login')
 def clear_scanned_header_change(request, username):
     cashier = User.objects.get(username=username)
     scanned_products_header = ScannedProductHeader.objects.get(cashier=cashier)
@@ -930,6 +964,7 @@ def clear_scanned_header_change(request, username):
     })
 
 
+@login_required(login_url='login')
 def product_info(request, id):
     product = Product.objects.get(id=id)
     product_form = ChangeProductForm(instance=product)
@@ -957,6 +992,7 @@ def product_info(request, id):
     })
 
 
+@login_required(login_url='login')
 def products(request):
     notifications = Notification.objects.filter(removed=False)
     products = Product.objects.all()
