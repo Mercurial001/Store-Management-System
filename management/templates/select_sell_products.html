@@ -6,9 +6,7 @@
 
 {% block content %}
     <section class="selected-sell-selected-products-lists">
-        <div>
-            {% include 'products_list.html' %}
-        </div>
+        {% include 'products_list.html' %}
         <div class="select-sell-sell-form-section" id="select-sell-sell-form-section">
             {% if not scanned_sum == 0 %}
             <form action="{% url 'sell-scanned-products' request.user " hx-trigger="htmx:afterSwap">
@@ -67,6 +65,7 @@
 
             quantityField.classList.toggle('selected');
             quantityField.classList.toggle('select-sell-product-quantity-input-container-div-show');
+
             // Set the value of the quantity input based on the checkbox state
             quantityInput.value = checkbox.checked ? 1 : '';
 

@@ -240,7 +240,6 @@ def dashboard(request):
     })
 
 
-
 @unauthenticated_user
 def authentication(request):
     notifications = Notification.objects.filter(removed=False)
@@ -496,6 +495,8 @@ def add_quantity_product(request, username, barcode):
     scanned_product_list.save()
 
     scanned_product.scanned_quantity += 1
+    # Newly Added Somehow I wanted to test this out, to make the quantities change in real time. 1/15/2024
+    scanned_product.quantity -= 1
     scanned_product.save()
 
     referring_url = request.META.get('HTTP_REFERER')
@@ -522,6 +523,9 @@ def subtract_quantity_product(request, username, barcode):
     scanned_product_list.save()
 
     scanned_product.scanned_quantity -= 1
+    # Newly Added Somehow I wanted to test this out, to make the quantities change in real time. 1/25/2024
+    # It works like heaven
+    scanned_product.quantity += 1
     scanned_product.save()
 
     referring_url = request.META.get('HTTP_REFERER')
@@ -542,6 +546,18 @@ def remove_scanned_product(request, username, barcode):
 
     # scanned_product_barcode = request.GET.get['video']
     scanned_product = CashierDynamicProducts.objects.get(barcode=barcode, cashier=user)
+    scanned_product.quantity += scanned_product.scanned_quantity
+
+    main_products = Product.objects.filter(name=scanned_product.name)
+    for main_product in main_products:
+        main_product.quantity = scanned_product.quantity
+        main_product.save()
+
+    dynamic_products = CashierDynamicProducts.objects.filter(name=scanned_product.name)
+    for dynamic_product in dynamic_products:
+        dynamic_product.quantity = scanned_product.quantity
+        dynamic_product.save()
+
     scanned_product_list.product.remove(scanned_product)
 
     scanned_product_list.summed_product_price -= (scanned_product.price * scanned_product.scanned_quantity)
@@ -563,36 +579,12 @@ def remove_scanned_product(request, username, barcode):
 @login_required(login_url='login')
 def sell_scanned_products(request, username):
     user = User.objects.get(username=username)
-
     scanned_products = ScannedProducts.objects.filter(cashier=user)
     # Let's retrieve the models that we need for this operation
     product_types = ProductType.objects.all()
     products = CashierDynamicProducts.objects.filter(cashier=user)
     cashier = ScannedProducts.objects.get(cashier=user)
     scanned_products_header = ScannedProductHeader.objects.get(cashier=user)
-
-    product_main = Product.objects.filter(quantity__lte=0)
-    for product in product_main:
-        sold_out_product = SoldOutProduct.objects.create(
-            name=product.name,
-            barcode=product.barcode,
-            price=product.price,
-            type=product.type,
-        )
-
-        notification = Notification.objects.create(
-            title=f'Sold Out Product: {product.name}',
-            message=f'This is to notify you that the product, "{product.name}" is now out of stock.'
-        )
-
-        notification.save()
-
-        sold_out_product.save()
-        product.delete()
-
-    dynamic_products = CashierDynamicProducts.objects.filter(quantity__lte=0)
-    for dynamic_product in dynamic_products:
-        dynamic_product.delete()
 
     for trier in cashier.product.all():
 
@@ -666,6 +658,29 @@ def sell_scanned_products(request, username):
     product = [product for product in products]
     cashier.product.remove(*product)
     cashier.save()
+
+    product_main = Product.objects.filter(quantity__lte=0)
+    for product in product_main:
+        sold_out_product = SoldOutProduct.objects.create(
+            name=product.name,
+            barcode=product.barcode,
+            price=product.price,
+            type=product.type,
+        )
+
+        notification = Notification.objects.create(
+            title=f'Sold Out Product: {product.name}',
+            message=f'This is to notify you that the product, "{product.name}" is now out of stock.'
+        )
+
+        notification.save()
+
+        sold_out_product.save()
+        product.delete()
+
+    dynamic_products = CashierDynamicProducts.objects.filter(quantity__lte=0)
+    for dynamic_product in dynamic_products:
+        dynamic_product.delete()
 
     products = CashierDynamicProducts.objects.filter(cashier=user)
     product_types_list = {}
@@ -769,14 +784,6 @@ def select_products_sell(request, username):
     scanned_product = ScannedProducts.objects.get(cashier=cashier)
     total_price_scanned_products = scanned_product.summed_product_price
 
-    product_types_list = {}
-    for producto in products:
-        product_type = producto.type
-        if product_type not in product_types_list:
-            product_types_list[product_type] = [producto]
-        else:
-            product_types_list[product_type].append(producto)
-
     if request.method == 'POST':
         selected_products = request.POST.getlist('selectedProducts')
         selected_products_quantity = request.POST.getlist(f'product-quantity')
@@ -788,10 +795,28 @@ def select_products_sell(request, username):
             product = CashierDynamicProducts.objects.get(id=id)
             product.scanned_quantity += int(quantity)
             scanned_product_list.summed_product_price += product.price * int(quantity)
-            print(f'quantity:{quantity}')
+            product.quantity -= int(quantity)
             product.save()
 
+            main_products = Product.objects.filter(name=product.name)
+            for main_product in main_products:
+                main_product.quantity = product.quantity
+                main_product.save()
+
+            dynamic_products = CashierDynamicProducts.objects.filter(name=product.name)
+            for dynamic_product in dynamic_products:
+                dynamic_product.quantity = product.quantity
+                dynamic_product.save()
+
         scanned_product_list.save()
+
+    product_types_list = {}
+    for producto in products:
+        product_type = producto.type
+        if product_type not in product_types_list:
+            product_types_list[product_type] = [producto]
+        else:
+            product_types_list[product_type].append(producto)
 
     scanned_length = ScannedProducts.objects.filter(cashier=cashier).annotate(scanned_length=Count('product'))
     scanned_sum = scanned_length.aggregate(length_sum=Sum('scanned_length'))['length_sum']
@@ -822,7 +847,15 @@ def expired_products_json(request):
             type=product.type,
         )
 
-        notification = Notification.objects.create(
+        # Commented due to some testing, and I'm trying to figure out why I chose create method instead of get_or_create
+        # notification = Notification.objects.create(
+        #     title=f'Sold Out Product: {product.name}',
+        #     message=f'This is to notify you that the product, "{product.name}" is now out of stock.',
+        #     identifier=f'Sold Out Product Identifier {product.name}-{product.id}',
+        # )
+        # notification.save()
+
+        notification = Notification.objects.get_or_create(
             title=f'Sold Out Product: {product.name}',
             message=f'This is to notify you that the product, "{product.name}" is now out of stock.',
             identifier=f'Sold Out Product Identifier {product.name}-{product.id}',
@@ -830,7 +863,7 @@ def expired_products_json(request):
         notification.save()
 
         sold_out_product.save()
-        product.delete()
+        # product.delete()
 
     for product in running_low_products:
         if product.quantity == 1:
@@ -844,9 +877,9 @@ def expired_products_json(request):
         )
         depletion_notification.save()
 
-    dynamic_products = CashierDynamicProducts.objects.filter(quantity__lte=0)
-    for dynamic_product in dynamic_products:
-        dynamic_product.delete()
+    # dynamic_products = CashierDynamicProducts.objects.filter(quantity__lte=0)
+    # for dynamic_product in dynamic_products:
+    #     dynamic_product.delete()
 
     current_date = timezone.now()
     thirty_days_ago = current_date - timedelta(days=30)

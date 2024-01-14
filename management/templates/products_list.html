@@ -56,19 +56,21 @@
                                     {{ product.scanned_quantity }}
                                 </div>
                                 <div class="select-sell-quantity-element">
-                                    <form hx-trigger="htmx:afterSwap">
-                                        {% csrf_token %}
-                                        <div>
-                                            <button hx-post="{% url 'add-quantity' request.user product.barcode %}"
-                                                    hx-target=".selected-sell-selected-products-lists"
-                                                    hx-select=".selected-sell-selected-products-lists"
-                                                    hx-swap="innerHTML"
-                                                    id="select-sell-add-quantity"
-                                                    class="select-sell-quantity-btn">
-                                                +
-                                            </button>
-                                        </div>
-                                    </form>
+                                    {% if not product.quantity <= 0 %}
+                                        <form hx-trigger="htmx:afterSwap">
+                                            {% csrf_token %}
+                                            <div>
+                                                <button hx-post="{% url 'add-quantity' request.user product.barcode %}"
+                                                        hx-target=".selected-sell-selected-products-lists"
+                                                        hx-select=".selected-sell-selected-products-lists"
+                                                        hx-swap="innerHTML"
+                                                        id="select-sell-add-quantity"
+                                                        class="select-sell-quantity-btn">
+                                                    +
+                                                </button>
+                                            </div>
+                                        </form>
+                                    {% endif %}
                                 </div>
                             </td>
                             <td class="scanned-products-table-data" id="scanned-products-table-data-price">
@@ -103,7 +105,7 @@
                             hx-target=".selected-sell-selected-products-lists"
                             hx-select=".selected-sell-selected-products-lists"
                             hx-indicator=".loading-spinner-product-list"
-                            hx-swap="innerHTML">
+                            hx-swap="outerHTML">
                         Submit Selected</button>
                 </div>
             </div>
