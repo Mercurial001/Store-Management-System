@@ -4,6 +4,7 @@
 
 {% block content %}
     <script src="{% static 'chart.umd.js' %}"></script>
+    {{ summed_sold_product_profit }}
     <section id="graphs-section">
         <div class="graph-div">
             <div class="analytics-box-div">
@@ -66,9 +67,11 @@
                     </div>
                     <canvas id="SoldPerProductsChartFiltered" width="1050" height="500"></canvas>
                     <canvas id="ProductsSoldDailyChartFiltered" width="1050" height="500"></canvas>
+                    <canvas id="ProductsProfitDailyChartFiltered" width="1050" height="500"></canvas>
                 {% elif not selected_type_sold_product %}
                     <canvas id="SoldPerProductsChart" width="1050" height="500"></canvas>
                     <canvas id="ProductsSoldDailyChart" width="1050" height="500"></canvas>
+                    <canvas id="ProductsProfitDailyChart" width="1050" height="500"></canvas>
                 {% endif %}
 
             </div>
@@ -155,6 +158,42 @@
           }
         });
 
+        var sold_product_date_sold = {{  sold_product_profit_date|safe }};
+        var products_sold_profit = {{ summed_sold_product_profit|safe }};
+
+        var dailyProductsProfitChart = document.getElementById('ProductsProfitDailyChart').getContext('2d');
+
+        var profit_data = {
+          labels: sold_product_date_sold,
+          datasets: [{
+            label: 'Profits',
+            data: products_sold_profit,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        };
+
+        var myChart = new Chart(dailyProductsProfitChart, {
+            type: 'line',
+            data: profit_data,
+            options: {
+            scales: {
+                x: {
+                    grid: {
+                        drawOnChartArea: false
+                        },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                }
+            }
+          }
+        });
+
     </script>
     <script>
         // Define your data and labels
@@ -214,6 +253,43 @@
         var myBarChartDailySale = new Chart(dailyProductsSoldChart, {
             type: 'line',
             data: data,
+            options: {
+            scales: {
+                x: {
+                    grid: {
+                        drawOnChartArea: false
+                        },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                }
+            }
+          }
+        });
+
+        // Filtered Daily Profit
+        var sold_product_date_sold_filtered = {{  sold_product_profit_date_filtered|safe }};
+        var products_sold_profit_filtered = {{ summed_sold_product_profit_filtered|safe }};
+
+        var dailyProductsProfitChartFiltered = document.getElementById('ProductsProfitDailyChartFiltered').getContext('2d');
+
+        var profit_data_filtered = {
+          labels: sold_product_date_sold_filtered,
+          datasets: [{
+            label: 'Profits',
+            data: products_sold_profit_filtered,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        };
+
+        var myChart = new Chart(dailyProductsProfitChartFiltered, {
+            type: 'line',
+            data: profit_data_filtered,
             options: {
             scales: {
                 x: {

@@ -94,12 +94,13 @@ def dashboard(request):
     notifications = Notification.objects.filter(removed=False)
     thirty_days_ago = timezone.now() - timedelta(days=30)
     product_type = ProductType.objects.all()
-    data = SoldProducts.objects.filter(date_sold_no_time__gte=thirty_days_ago) \
-        .values('date_sold_no_time') \
-        .annotate(products_count=Count('product__sold_quantity'))
 
-    products_sold_dates = [entry['date_sold_no_time'].strftime('%Y-%m-%d') for entry in data]
-    products_counts = [entry['products_count'] for entry in data]
+    # data = SoldProducts.objects.filter(date_sold_no_time__gte=thirty_days_ago) \
+    #     .values('date_sold_no_time') \
+    #     .annotate(products_count=Count('product__sold_quantity'), )
+    #
+    # products_sold_dates = [entry['date_sold_no_time'].strftime('%Y-%m-%d') for entry in data]
+    # products_counts = [entry['products_count'] for entry in data]
 
     current_date = timezone.now()
     thirty_days_ago = current_date - timedelta(days=30)
@@ -119,6 +120,7 @@ def dashboard(request):
                                                         expiry_date__lte=thirty_days_from_now)
 
     sold_products_objects = SoldProducts.objects.filter(date_sold_no_time__gte=thirty_days_ago)
+
     sold_products_date = {}
     for products in sold_products_objects:
         for product in products.product.all():
@@ -132,6 +134,7 @@ def dashboard(request):
     product_sold_date = [product_date.strftime('%Y-%m-%d') for product_date, quantity_list in sold_products_date.items()]
 
     sold_products = SoldProduct.objects.filter(date_sold_no_time__gte=thirty_days_ago)
+
     sold_products_list = {}
     for products in sold_products:
         product = products.name
@@ -145,14 +148,28 @@ def dashboard(request):
     summed_products_quantities = [sum(quantity_list) for product, quantity_list in sold_products_list.items()]
     summed_products_products = [product for product, quantity_list in sold_products_list.items()]
 
-    # Filtration of graphs
+    sold_products_profits = SoldProducts.objects.filter(date_sold_no_time__gte=thirty_days_ago)
 
+    sold_products_profit_list = {}
+    for products in sold_products_profits:
+        product_date = products.date_sold_no_time
+        for product in products.product.all():
+            if product_date not in sold_products_profit_list:
+                sold_products_profit_list[product_date] = [product.price]
+            else:
+                sold_products_profit_list[product_date].append(product.price)
+
+    summed_sold_product_profit = [sum(product_price) for product_date, product_price in sold_products_profit_list.items()]
+    sold_product_profit_date = [product_date.strftime('%Y-%m-%d') for product_date, product_price in sold_products_profit_list.items()]
+
+    # Filtration of graphs
     selected_month_sold_product = request.GET.get('selected-month')
     selected_type_sold_product = request.GET.get('type-filter')
     selected_cashier_sold_product = request.GET.get('cashier-branch-filter')
 
     sold_products_list_filtered = {}
     sold_products_date_filtered = {}
+    sold_products_profit_filtered = {}
 
     if selected_month_sold_product or selected_cashier_sold_product or selected_type_sold_product:
 
@@ -190,31 +207,51 @@ def dashboard(request):
                 else:
                     sold_products_date_filtered[product_date].append(product.sold_quantity)
 
+        sold_products_profits = SoldProducts.objects.filter(
+            date_sold_no_time__month=selected_month,
+            date_sold_no_time__year=selected_year,
+            product__type__product_type=selected_type_sold_product,
+            cashier__username=selected_cashier_sold_product,
+        )
+
+        sold_products_profit_filtered = {}
+        for products in sold_products_profits:
+            product_date = products.date_sold_no_time
+            for product in products.product.all():
+                if product_date not in sold_products_profit_filtered:
+                    sold_products_profit_filtered[product_date] = [product.price]
+                else:
+                    sold_products_profit_filtered[product_date].append(product.price)
+
+    # Filtered Products Quantity
     summed_sold_products_quantities_filtered = [
         sum(quantity_list) for product, quantity_list in sold_products_date_filtered.items()
     ]
     product_sold_date_filtered = [
         product_date.strftime('%Y-%m-%d') for product_date, quantity_list in sold_products_date_filtered.items()
     ]
-
-    summed_products_filtered = {
-        product: sum(quantity_list) for product, quantity_list in sold_products_list_filtered.items()
-    }
+    # Filtered Product Sales
     summed_products_quantities_filtered = [
         sum(quantity_list) for product, quantity_list in sold_products_list_filtered.items()
     ]
     summed_products_products_filtered = [
         product for product, quantity_list in sold_products_list_filtered.items()
     ]
-
+    # Filtered Daily Profits
+    summed_sold_product_profit_filtered = [
+        sum(product_price) for product_date, product_price in sold_products_profit_filtered.items()
+    ]
+    sold_product_profit_date_filtered = [
+        product_date.strftime('%Y-%m-%d') for product_date, product_price in sold_products_profit_filtered.items()
+    ]
     return render(request, 'dashboard.html', {
         'summed_products': summed_products,
         'summed_products_quantities': summed_products_quantities,
         'summed_products_products': summed_products_products,
         'sold_products_date': sold_products_date,
-        'products_sold_dates': products_sold_dates,
-        'products_counts': products_counts,
-        'data': data,
+        # 'products_sold_dates': products_sold_dates,
+        # 'products_counts': products_counts,
+        # 'data': data,
         'sold_products_list': sold_products_list,
         'summed_sold_products_quantities': summed_sold_products_quantities,
         'product_sold_date': product_sold_date,
@@ -225,17 +262,22 @@ def dashboard(request):
         'product_type': product_type,
         'product_types': prod_types,
         'users': users,
+        # Sold Product Profit
+        'summed_sold_product_profit': summed_sold_product_profit,
+        'sold_product_profit_date': sold_product_profit_date,
         # Sold Product Filters
         'selected_month_sold_product': selected_month_sold_product,
         'selected_type_sold_product': selected_type_sold_product,
         'selected_cashier_sold_product': selected_cashier_sold_product,
         # Filtered Dashboard Data Sold Products
-        'summed_products_filtered': summed_products_filtered,
         'summed_products_quantities_filtered': summed_products_quantities_filtered,
         'summed_products_products_filtered': summed_products_products_filtered,
         # Filtered Dashboard Data Daily Sales
         'summed_sold_products_quantities_filtered': summed_sold_products_quantities_filtered,
         'product_sold_date_filtered': product_sold_date_filtered,
+        # Filtered Dashboard Data Daily Profits
+        'summed_sold_product_profit_filtered': summed_sold_product_profit_filtered,
+        'sold_product_profit_date_filtered': sold_product_profit_date_filtered,
     })
 
 
