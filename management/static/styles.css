@@ -345,8 +345,8 @@ body{
 /* select_sell_products.html */
 
 .selected {
-    background-color: rgb(10, 40, 40); /* Blue color */
-    color: beige; /* White text on selected background */
+    background-color: rgb(10, 40, 40);
+    color: beige;
 }
 
 .select-sell-products-container-section{

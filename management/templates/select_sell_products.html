@@ -31,12 +31,7 @@
                 </div>
             </form>
             {% endif %}
-<!--            {% if not scanned_products_header.change == None or scanned_products_header.change == 0 %}-->
-<!--                <div>-->
-<!--                    Change: {{ scanned_products_header.change }}-->
-<!--                </div>-->
-<!--            {% else %}-->
-<!--            {% endif %}-->
+
         </div>
     </section>
     <script>
@@ -87,6 +82,7 @@
             }
 
             console.log(selectedProducts);
+
             const selectedProductNamesDiv = document.getElementById('selectedProductNames');
             selectedProductNamesDiv.innerHTML = selectedProducts.map(product => `${product}<div id="selected-product-select-sell">`).join('');
             submitSelectedBtn.addEventListener('click', () => {

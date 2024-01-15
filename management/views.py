@@ -5,7 +5,6 @@ from .forms import ProductForm, CreateUserForm, ScannedProductAddQuantityForm, P
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from .decorators import unauthenticated_user, admin_group_required
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
 from django.utils import timezone
 import cv2
@@ -586,21 +585,6 @@ def sell_scanned_products(request, username):
     cashier = ScannedProducts.objects.get(cashier=user)
     scanned_products_header = ScannedProductHeader.objects.get(cashier=user)
 
-    for trier in cashier.product.all():
-
-        main_product = Product.objects.get(name=trier.name)
-        main_product.quantity -= trier.scanned_quantity
-        main_product.save()
-
-        dynamic_products = CashierDynamicProducts.objects.filter(name=main_product.name)
-        for dynamic_product in dynamic_products:
-            dynamic_product.quantity = main_product.quantity
-            dynamic_product.save()
-
-        dynamic_products_cashier = CashierDynamicProducts.objects.get(cashier=user, name=trier.name)
-        dynamic_products_cashier.quantity = main_product.quantity
-        dynamic_products_cashier.save()
-
     for product in cashier.product.all():
         # Let's create a SoldProduct object from products that are sold right after they are scanned.
         sold_product = SoldProduct.objects.create(
@@ -847,23 +831,7 @@ def expired_products_json(request):
             type=product.type,
         )
 
-        # Commented due to some testing, and I'm trying to figure out why I chose create method instead of get_or_create
-        # notification = Notification.objects.create(
-        #     title=f'Sold Out Product: {product.name}',
-        #     message=f'This is to notify you that the product, "{product.name}" is now out of stock.',
-        #     identifier=f'Sold Out Product Identifier {product.name}-{product.id}',
-        # )
-        # notification.save()
-
-        notification = Notification.objects.get_or_create(
-            title=f'Sold Out Product: {product.name}',
-            message=f'This is to notify you that the product, "{product.name}" is now out of stock.',
-            identifier=f'Sold Out Product Identifier {product.name}-{product.id}',
-        )
-        notification.save()
-
         sold_out_product.save()
-        # product.delete()
 
     for product in running_low_products:
         if product.quantity == 1:
@@ -876,10 +844,6 @@ def expired_products_json(request):
             identifier=f'Product Nearing Depletion Identifier: {product.name}-{product.id}-{product.quantity}-{product.barcode}'
         )
         depletion_notification.save()
-
-    # dynamic_products = CashierDynamicProducts.objects.filter(quantity__lte=0)
-    # for dynamic_product in dynamic_products:
-    #     dynamic_product.delete()
 
     current_date = timezone.now()
     thirty_days_ago = current_date - timedelta(days=30)
@@ -1038,14 +1002,6 @@ def products(request):
             product_types_list[product_type].append(producto)
     return render(request, 'products.html', {
         'product_types_list': product_types_list,
+        'notifications': notifications,
     })
 
-
-# def date_assign(request):
-#     sold_products = SoldProduct.objects.all()
-#     for product in sold_products:
-#         product.date_sold = timezone.now()
-#         product.date_sold_no_time = timezone.now().date()
-#         product.save()
-#
-#     return redirect('dashboard')
