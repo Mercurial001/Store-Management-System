@@ -30,10 +30,6 @@ class ScannedProductHeaderAdmin(admin.ModelAdmin):
         # Disable the ability to add new FineRate objects
         return False
 
-    def has_delete_permission(self, request, obj=None):
-        # Disable the ability to delete FineRate objects
-        return False
-
 
 class SoldProductHubAdmin(admin.ModelAdmin):
     list_display = ('cashier', )

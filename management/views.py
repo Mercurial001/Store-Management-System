@@ -312,11 +312,18 @@ def register(request):
                 user_created = form.save(commit=False)
                 user_created.save()
 
+                new_user = User.objects.get(username=user_created.username)
+
                 # Create a ScannedProducts Objects to address the scalability concern
-                cashier, created = ScannedProducts.objects.get_or_create(cashier=user_created)
+                cashier, created = ScannedProducts.objects.get_or_create(
+                    cashier=new_user,
+                    summed_product_price=0,
+                )
                 cashier.save()
 
-                scanned_product_header, created = ScannedProductHeader.objects.get_or_create(cashier=cashier)
+                scanned_product_header, created = ScannedProductHeader.objects.get_or_create(
+                    cashier=new_user,
+                )
                 scanned_product_header.save()
                 # Let's Create a Product for the Registered Cashier so as not to tamper the original product's details
                 products = Product.objects.all()
