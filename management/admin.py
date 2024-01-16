@@ -9,6 +9,16 @@ from .models import ScannedProductHeader
 from .models import SoldOutProduct
 from .models import ProductType
 from .models import Notification
+from .models import Expenses
+from .models import TotalExpenses
+
+
+class TotalExpensesAdmin(admin.ModelAdmin):
+    list_display = ('expense',)
+
+
+class ExpensesAdmin(admin.ModelAdmin):
+    list_display = ('expense', 'date_no_time')
 
 
 class NotificationAdmin(admin.ModelAdmin):
@@ -55,6 +65,8 @@ class ScannedProductsAdmin(admin.ModelAdmin):
     list_display = ('cashier',)
 
 
+admin.site.register(TotalExpenses, TotalExpensesAdmin)
+admin.site.register(Expenses, ExpensesAdmin)
 admin.site.register(Notification, NotificationAdmin)
 admin.site.register(ProductType, ProductTypeAdmin)
 admin.site.register(SoldOutProduct, SoldOutProductAdmin)
