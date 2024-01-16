@@ -119,3 +119,16 @@ class Notification(models.Model):
 
     class Meta:
         ordering = ['-date_time']
+
+
+class Expenses(models.Model):
+    expense = models.IntegerField(default=0)
+    description = models.TextField()
+    date = models.DateTimeField(auto_now_add=True)
+    date_no_time = models.DateField(auto_now=True)
+    image = models.ImageField(null=True, blank=True, upload_to="images/")
+
+
+class TotalExpenses(models.Model):
+    expense = models.IntegerField(default=0)
+

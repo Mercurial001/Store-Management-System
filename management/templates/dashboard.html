@@ -4,6 +4,14 @@
 
 {% block content %}
     <script src="{% static 'chart.umd.js' %}"></script>
+<!--    {{ total_revenue_sum }}-->
+<!--    <div>-->
+<!--        LKA: {{ laka }}-->
+<!--    </div>-->
+<!--    <div>-->
+<!--        YASHA: {{ total_revenue  }}-->
+<!--    </div>-->
+    {{ total_revenue_sum }}
     <section id="graphs-section">
         <div class="graph-div">
             <div class="analytics-box-div">
@@ -165,7 +173,7 @@
         var profit_data = {
           labels: sold_product_date_sold,
           datasets: [{
-            label: 'Profits',
+            label: 'Revenue',
             data: products_sold_profit,
             backgroundColor: 'rgba(75, 192, 192, 0.2)',
             borderColor: 'rgba(75, 192, 192, 1)',
@@ -270,7 +278,7 @@
         });
 
         // Filtered Daily Profit
-        var sold_product_date_sold_filtered = {{  sold_product_profit_date_filtered|safe }};
+        var sold_product_date_sold_filtered = {{ sold_product_profit_date_filtered|safe }};
         var products_sold_profit_filtered = {{ summed_sold_product_profit_filtered|safe }};
 
         var dailyProductsProfitChartFiltered = document.getElementById('ProductsProfitDailyChartFiltered').getContext('2d');
@@ -278,7 +286,7 @@
         var profit_data_filtered = {
           labels: sold_product_date_sold_filtered,
           datasets: [{
-            label: 'Profits',
+            label: 'Revenue (Filtered)',
             data: products_sold_profit_filtered,
             backgroundColor: 'rgba(75, 192, 192, 0.2)',
             borderColor: 'rgba(75, 192, 192, 1)',

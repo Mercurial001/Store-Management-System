@@ -95,13 +95,6 @@ def dashboard(request):
     thirty_days_ago = timezone.now() - timedelta(days=30)
     product_type = ProductType.objects.all()
 
-    # data = SoldProducts.objects.filter(date_sold_no_time__gte=thirty_days_ago) \
-    #     .values('date_sold_no_time') \
-    #     .annotate(products_count=Count('product__sold_quantity'), )
-    #
-    # products_sold_dates = [entry['date_sold_no_time'].strftime('%Y-%m-%d') for entry in data]
-    # products_counts = [entry['products_count'] for entry in data]
-
     current_date = timezone.now()
     thirty_days_ago = current_date - timedelta(days=30)
 
@@ -153,11 +146,10 @@ def dashboard(request):
     sold_products_profit_list = {}
     for products in sold_products_profits:
         product_date = products.date_sold_no_time
-        for product in products.product.all():
-            if product_date not in sold_products_profit_list:
-                sold_products_profit_list[product_date] = [product.price]
-            else:
-                sold_products_profit_list[product_date].append(product.price)
+        if product_date not in sold_products_profit_list:
+            sold_products_profit_list[product_date] = [products.total_price]
+        else:
+            sold_products_profit_list[product_date].append(products.total_price)
 
     summed_sold_product_profit = [sum(product_price) for product_date, product_price in sold_products_profit_list.items()]
     sold_product_profit_date = [product_date.strftime('%Y-%m-%d') for product_date, product_price in sold_products_profit_list.items()]
@@ -244,7 +236,24 @@ def dashboard(request):
     sold_product_profit_date_filtered = [
         product_date.strftime('%Y-%m-%d') for product_date, product_price in sold_products_profit_filtered.items()
     ]
+
+    revenue_list = {}
+    revenues = SoldProducts.objects.all()
+    for revenue in revenues:
+        rev = revenue.total_price
+        if rev not in revenue_list:
+            revenue_list[rev] = [rev]
+        else:
+            revenue_list[rev].append(rev)
+
+    total_revenue = [sum(rev_array) for rev, rev_array in revenue_list.items()]
+    total_revenue_sum = sum(total_revenue) - 23433
+
+    # revenues = SoldProducts.objects.values('total_price')
+    # total_revenue = revenues.aggregate(total_revenue=Sum('total_price'))['total_revenue']
     return render(request, 'dashboard.html', {
+        'total_revenue': total_revenue,
+        'total_revenue_sum': total_revenue_sum,
         'summed_products': summed_products,
         'summed_products_quantities': summed_products_quantities,
         'summed_products_products': summed_products_products,
