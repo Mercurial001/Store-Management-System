@@ -11,6 +11,19 @@ from .models import ProductType
 from .models import Notification
 from .models import Expenses
 from .models import TotalExpenses
+from .models import TotalIncome
+
+
+class TotalIncomeAdmin(admin.ModelAdmin):
+    list_display = ('income',)
+
+    def has_add_permission(self, request):
+        # Disable the ability to add new FineRate objects
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Disable the ability to add new FineRate objects
+        return False
 
 
 class TotalExpensesAdmin(admin.ModelAdmin):
@@ -73,6 +86,7 @@ class ScannedProductsAdmin(admin.ModelAdmin):
     list_display = ('cashier',)
 
 
+admin.site.register(TotalIncome, TotalIncomeAdmin)
 admin.site.register(TotalExpenses, TotalExpensesAdmin)
 admin.site.register(Expenses, ExpensesAdmin)
 admin.site.register(Notification, NotificationAdmin)
