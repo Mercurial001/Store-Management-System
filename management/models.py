@@ -132,3 +132,6 @@ class Expenses(models.Model):
 class TotalExpenses(models.Model):
     expense = models.IntegerField(default=0)
 
+
+class TotalIncome(models.Model):
+    income = models.IntegerField(default=0)

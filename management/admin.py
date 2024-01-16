@@ -16,6 +16,14 @@ from .models import TotalExpenses
 class TotalExpensesAdmin(admin.ModelAdmin):
     list_display = ('expense',)
 
+    def has_add_permission(self, request):
+        # Disable the ability to add new FineRate objects
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Disable the ability to add new FineRate objects
+        return False
+
 
 class ExpensesAdmin(admin.ModelAdmin):
     list_display = ('expense', 'date_no_time')
