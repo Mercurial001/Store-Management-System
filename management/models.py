@@ -131,7 +131,23 @@ class Expenses(models.Model):
 
 class TotalExpenses(models.Model):
     expense = models.IntegerField(default=0)
+    last_updated = models.DateField(blank=True, null=True)
+    last_updated_time = models.DateTimeField(blank=True, null=True)
 
 
 class TotalIncome(models.Model):
     income = models.IntegerField(default=0)
+    last_updated = models.DateField(blank=True, null=True)
+    last_updated_time = models.DateTimeField(blank=True, null=True)
+
+
+class Revenue(models.Model):
+    revenue = models.IntegerField(default=0)
+    date = models.DateField(blank=True, null=True)
+    date_time = models.DateTimeField(blank=True, null=True)
+
+
+class TotalRevenue(models.Model):
+    revenue = models.IntegerField(default=0)
+    last_updated = models.DateField(blank=True, null=True)
+    last_updated_time = models.DateTimeField(blank=True, null=True)
