@@ -123,9 +123,9 @@ class Notification(models.Model):
 
 class Expenses(models.Model):
     expense = models.IntegerField(default=0)
-    description = models.TextField()
-    date = models.DateTimeField(auto_now_add=True)
-    date_no_time = models.DateField(auto_now=True)
+    description = models.TextField(null=True, blank=True)
+    date = models.DateTimeField(null=True, blank=True)
+    date_no_time = models.DateField(null=True, blank=True)
     image = models.ImageField(null=True, blank=True, upload_to="images/")
 
 
@@ -133,6 +133,16 @@ class TotalExpenses(models.Model):
     expense = models.IntegerField(default=0)
     last_updated = models.DateField(blank=True, null=True)
     last_updated_time = models.DateTimeField(blank=True, null=True)
+
+
+class Income(models.Model):
+    income = models.IntegerField(blank=True, null=True)
+    date = models.DateField(blank=True, null=True)
+    date_time = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-date']
+        verbose_name_plural = 'Income'
 
 
 class TotalIncome(models.Model):
@@ -145,6 +155,10 @@ class Revenue(models.Model):
     revenue = models.IntegerField(default=0)
     date = models.DateField(blank=True, null=True)
     date_time = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-date']
+        verbose_name_plural = 'Revenues'
 
 
 class TotalRevenue(models.Model):

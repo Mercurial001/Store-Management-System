@@ -12,6 +12,16 @@ from .models import Notification
 from .models import Expenses
 from .models import TotalExpenses
 from .models import TotalIncome
+from .models import Revenue
+from .models import Income
+
+
+class IncomeAdmin(admin.ModelAdmin):
+    list_display = ('income', 'date')
+
+
+class RevenueAdmin(admin.ModelAdmin):
+    list_display = ('revenue', 'date')
 
 
 class TotalIncomeAdmin(admin.ModelAdmin):
@@ -86,6 +96,8 @@ class ScannedProductsAdmin(admin.ModelAdmin):
     list_display = ('cashier',)
 
 
+admin.site.register(Income, IncomeAdmin)
+admin.site.register(Revenue, RevenueAdmin)
 admin.site.register(TotalIncome, TotalIncomeAdmin)
 admin.site.register(TotalExpenses, TotalExpensesAdmin)
 admin.site.register(Expenses, ExpensesAdmin)

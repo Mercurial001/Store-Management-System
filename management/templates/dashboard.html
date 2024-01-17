@@ -4,14 +4,6 @@
 
 {% block content %}
     <script src="{% static 'chart.umd.js' %}"></script>
-<!--    {{ total_revenue_sum }}-->
-<!--    <div>-->
-<!--        LKA: {{ laka }}-->
-<!--    </div>-->
-<!--    <div>-->
-<!--        YASHA: {{ total_revenue  }}-->
-<!--    </div>-->
-    {{ total_revenue_sum }}
     <section id="graphs-section">
         <div class="graph-div">
             <div class="analytics-box-div">
@@ -78,9 +70,10 @@
                 {% elif not selected_type_sold_product %}
                     <canvas id="SoldPerProductsChart" width="700" height="300"></canvas>
                     <canvas id="ProductsSoldDailyChart" width="700" height="300"></canvas>
-                    <canvas id="ProductsProfitDailyChart" width="700" height="300"></canvas>
+                    <canvas id="dailyRevenueChart" width="700" height="300"></canvas>
+                    <canvas id="ExpenseDailyChart" width="700" height="300"></canvas>
+                    <canvas id="IncomeDailyChart" width="700" height="300"></canvas>
                 {% endif %}
-
             </div>
             <div class="analytics-box-div">
 
@@ -165,10 +158,90 @@
           }
         });
 
-        var sold_product_date_sold = {{  sold_product_profit_date|safe }};
-        var products_sold_profit = {{ summed_sold_product_profit|safe }};
+        // Define your data and labels
 
-        var dailyProductsProfitChart = document.getElementById('ProductsProfitDailyChart').getContext('2d');
+        var expense_date = {{ expense_date|safe }};
+        var expenses = {{ expense_sum|safe }};
+
+        var dailyExpenseChart = document.getElementById('ExpenseDailyChart').getContext('2d');
+
+        var expense_data = {
+          labels: expense_date,
+          datasets: [{
+            label: 'Expenses',
+            data: expenses,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        };
+
+        var myExpenseChart = new Chart(dailyExpenseChart, {
+            type: 'line',
+            data: expense_data,
+            options: {
+            scales: {
+                x: {
+                    grid: {
+                        drawOnChartArea: false
+                        },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                }
+            }
+          }
+        });
+
+        // Define your data and labels
+
+        var income_date = {{ expense_date|safe }};
+        var income = {{ income_array|safe }};
+
+        var dailyIncomeChart = document.getElementById('IncomeDailyChart').getContext('2d');
+
+        var income_data = {
+          labels: income_date,
+          datasets: [{
+            label: 'Income',
+            data: income,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        };
+
+        var myExpenseChart = new Chart(dailyIncomeChart, {
+            type: 'line',
+            data: income_data,
+            options: {
+            scales: {
+                x: {
+                    grid: {
+                        drawOnChartArea: false
+                        },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                }
+            }
+          }
+        });
+    </script>
+
+    <script>
+        // Define your data and labels
+
+        var sold_product_date_sold = {{  sold_product_profit_date|safe }};
+        var products_sold_profit = {{ summed_sold_product_revenue|safe }};
+
+        var dailyRevenueChart = document.getElementById('dailyRevenueChart').getContext('2d');
 
         var profit_data = {
           labels: sold_product_date_sold,
@@ -181,7 +254,7 @@
           }]
         };
 
-        var myChart = new Chart(dailyProductsProfitChart, {
+        var myRevenueChart = new Chart(dailyRevenueChart, {
             type: 'line',
             data: profit_data,
             options: {
@@ -200,7 +273,6 @@
             }
           }
         });
-
     </script>
     <script>
         // Define your data and labels

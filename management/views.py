@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import Product, ScannedProducts, SoldProducts, CashierDynamicProducts, SoldProduct, \
-    SoldProductHub, ScannedProductHeader, SoldOutProduct, ProductType, Notification
+    SoldProductHub, ScannedProductHeader, SoldOutProduct, ProductType, Notification, Expenses, Revenue, Income
 from .forms import ProductForm, CreateUserForm, ScannedProductAddQuantityForm, ProductTypeForm, ChangeProductForm
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -28,6 +28,11 @@ def index(request):
     product_type_form = ProductTypeForm()
     products = CashierDynamicProducts.objects.filter(cashier=1)
     notifications = Notification.objects.filter(removed=False)
+
+    current_date = timezone.now()
+    expense, created = Expenses.objects.get_or_create(date_no_time=current_date)
+    expense.save()
+
     barcodes = []
     for product in products:
         barcodes.append(product.barcode)
@@ -92,7 +97,6 @@ def dashboard(request):
     default_date = date.today()
     users = User.objects.all()
     notifications = Notification.objects.filter(removed=False)
-    thirty_days_ago = timezone.now() - timedelta(days=30)
     product_type = ProductType.objects.all()
 
     current_date = timezone.now()
@@ -141,18 +145,45 @@ def dashboard(request):
     summed_products_quantities = [sum(quantity_list) for product, quantity_list in sold_products_list.items()]
     summed_products_products = [product for product, quantity_list in sold_products_list.items()]
 
-    sold_products_profits = SoldProducts.objects.filter(date_sold_no_time__gte=thirty_days_ago)
-
-    sold_products_profit_list = {}
-    for products in sold_products_profits:
+    sold_products_revenue = SoldProducts.objects.filter(date_sold_no_time__gte=thirty_days_ago)
+    # sold_products_revenue = SoldProducts.objects.all()
+    sold_products_profit_revenue = {}
+    for products in sold_products_revenue:
         product_date = products.date_sold_no_time
-        if product_date not in sold_products_profit_list:
-            sold_products_profit_list[product_date] = [products.total_price]
+        if product_date not in sold_products_profit_revenue:
+            sold_products_profit_revenue[product_date] = [products.total_price]
         else:
-            sold_products_profit_list[product_date].append(products.total_price)
+            sold_products_profit_revenue[product_date].append(products.total_price)
 
-    summed_sold_product_profit = [sum(product_price) for product_date, product_price in sold_products_profit_list.items()]
-    sold_product_profit_date = [product_date.strftime('%Y-%m-%d') for product_date, product_price in sold_products_profit_list.items()]
+    summed_sold_product_revenue = [sum(product_price) for product_date, product_price in sold_products_profit_revenue.items()]
+    sold_product_profit_date = [product_date.strftime('%Y-%m-%d') for product_date, product_price in sold_products_profit_revenue.items()]
+
+    expenses_list = {}
+    expenses = Expenses.objects.filter(date_no_time__gte=thirty_days_ago)
+    # expenses = Expenses.objects.all()
+    for expense in expenses:
+        expense_date = expense.date_no_time
+        if expense_date not in expenses_list:
+            expenses_list[expense_date] = [expense.expense]
+        else:
+            expenses_list[expense_date].append(expense.expense)
+
+    expense_sum = [sum(expense) for expense_date, expense in expenses_list.items()]
+    expense_date = [expense_date.strftime('%Y-%m-%d') for expense_date, expense in expenses_list.items()]
+
+    for_income_date = [expense_date for expense_date, expense in expenses_list.items()]
+
+    for product_date, product_price in sold_products_profit_revenue.items():
+        revenue, created = Revenue.objects.get_or_create(date=product_date)
+        revenue.revenue = sum(product_price)
+        revenue.save()
+
+    income_array = []
+    for revenue, expense, income_date in zip(summed_sold_product_revenue, expense_sum, for_income_date):
+        income, created = Income.objects.get_or_create(date=income_date)
+        income.income = (revenue - expense)
+        income_array.append(revenue - expense)
+        income.save()
 
     # Filtration of graphs
     selected_month_sold_product = request.GET.get('selected-month')
@@ -247,20 +278,16 @@ def dashboard(request):
             revenue_list[rev].append(rev)
 
     total_revenue = [sum(rev_array) for rev, rev_array in revenue_list.items()]
-    total_revenue_sum = sum(total_revenue) - 23433
+    total_revenue_sum = sum(total_revenue)
 
-    # revenues = SoldProducts.objects.values('total_price')
-    # total_revenue = revenues.aggregate(total_revenue=Sum('total_price'))['total_revenue']
     return render(request, 'dashboard.html', {
+        'income_array': income_array,
         'total_revenue': total_revenue,
         'total_revenue_sum': total_revenue_sum,
         'summed_products': summed_products,
         'summed_products_quantities': summed_products_quantities,
         'summed_products_products': summed_products_products,
         'sold_products_date': sold_products_date,
-        # 'products_sold_dates': products_sold_dates,
-        # 'products_counts': products_counts,
-        # 'data': data,
         'sold_products_list': sold_products_list,
         'summed_sold_products_quantities': summed_sold_products_quantities,
         'product_sold_date': product_sold_date,
@@ -271,8 +298,11 @@ def dashboard(request):
         'product_type': product_type,
         'product_types': prod_types,
         'users': users,
+        # Expenses Data
+        'expense_sum': expense_sum,
+        'expense_date': expense_date,
         # Sold Product Profit
-        'summed_sold_product_profit': summed_sold_product_profit,
+        'summed_sold_product_revenue': summed_sold_product_revenue,
         'sold_product_profit_date': sold_product_profit_date,
         # Sold Product Filters
         'selected_month_sold_product': selected_month_sold_product,
