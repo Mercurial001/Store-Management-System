@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+    <table>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Group</th>
+            <th>Registration Date</th>
+        </tr>
+        {% for registrant in registrants %}
+        <tr>
+            <td>
+                {{ registrant.username }}
+            </td>
+            <td>
+                {{ registrant.email }}
+            </td>
+            <td>
+                {{ registrant.group }}
+            </td>
+            <td>
+                {{ registrant.date_time }}
+            </td>
+            <td>
+                <a href="{% url 'confirm-registration' registrant.username %}">Confirm</a>
+            </td>
+        </tr>
+        {% empty %}
+            <tr>
+                <td colspan="4" style='text-align: center;'>
+                    No Registrants
+                </td>
+
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

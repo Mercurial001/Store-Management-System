@@ -14,6 +14,11 @@ from .models import TotalExpenses
 from .models import TotalIncome
 from .models import Revenue
 from .models import Income
+from .models import UserCreationValidation
+
+
+class UserCreationValidationAdmin(admin.ModelAdmin):
+    list_display = ('username', )
 
 
 class IncomeAdmin(admin.ModelAdmin):
@@ -96,6 +101,7 @@ class ScannedProductsAdmin(admin.ModelAdmin):
     list_display = ('cashier',)
 
 
+admin.site.register(UserCreationValidation, UserCreationValidationAdmin)
 admin.site.register(Income, IncomeAdmin)
 admin.site.register(Revenue, RevenueAdmin)
 admin.site.register(TotalIncome, TotalIncomeAdmin)

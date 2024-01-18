@@ -1,14 +1,16 @@
 from django.shortcuts import render, redirect
 from .models import Product, ScannedProducts, SoldProducts, CashierDynamicProducts, SoldProduct, \
-    SoldProductHub, ScannedProductHeader, SoldOutProduct, ProductType, Notification, Expenses, Revenue, Income
-from .forms import ProductForm, CreateUserForm, ScannedProductAddQuantityForm, ProductTypeForm, ChangeProductForm
+    SoldProductHub, ScannedProductHeader, SoldOutProduct, ProductType, Notification, Expenses, Revenue, Income, \
+    UserCreationValidation
+from .forms import ProductForm, CreateUserForm, ScannedProductAddQuantityForm, ProductTypeForm, ChangeProductForm, \
+    RegistrationValidationForm
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from .decorators import unauthenticated_user, admin_group_required
 from django.contrib.auth.models import Group, User
 from django.utils import timezone
 import cv2
-from django.http import StreamingHttpResponse, JsonResponse, HttpResponseRedirect
+from django.http import StreamingHttpResponse, JsonResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.views.decorators import gzip
 from pyzbar.pyzbar import decode
 import winsound
@@ -17,10 +19,12 @@ from datetime import datetime, timedelta
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from datetime import date
 from django.db.models import Q
-from .decorators import unauthenticated_user
+from .decorators import unauthenticated_user, allowed_users, admin_group_required
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.hashers import make_password
 
 
+@allowed_users(allowed_roles=['admin'])
 @login_required(login_url='login')
 def index(request):
     users = User.objects.all()
@@ -92,6 +96,7 @@ def index(request):
     })
 
 
+@admin_group_required
 @login_required(login_url='login')
 def dashboard(request):
     default_date = date.today()
@@ -339,6 +344,56 @@ def authentication(request):
 
 
 @unauthenticated_user
+@login_required(login_url='login')
+def registration_validation(request):
+    if request.method == 'POST':
+        form = RegistrationValidationForm(request.POST)
+        if form.is_valid():
+
+            user = form.save(commit=False)
+            password1 = form.cleaned_data['password1']
+            password2 = form.cleaned_data['password2']
+
+            if User.objects.filter(email=user.email).exists() or\
+                    UserCreationValidation.objects.filter(email=user.email).exists():
+                messages.error(request, 'Email Already Exists')
+            if password1 == password2 and not User.objects.filter(email=user.email).exists() and not \
+                    UserCreationValidation.objects.filter(email=user.email).exists():
+                hashed_password = make_password(password1)
+                user.password = hashed_password
+
+                user.save()
+
+                # Create Register Instance
+                # registration_instance = Registrations.objects.create(instance=user.username)
+                # registration_instance.save()
+
+                return HttpResponseBadRequest("Your Account is Awaiting Validations.")
+
+            elif password1 != password2:
+                messages.error(request, 'Password not the same')
+
+            if User.objects.filter(username=user.username).exists() or \
+                    UserCreationValidation.objects.filter(username=user.username).exists():
+                messages.error(request, 'Username Already Exists')
+
+    else:
+        form = RegistrationValidationForm()
+    return render(request, 'registration_validation.html', {
+        'form': form,
+    })
+
+
+@admin_group_required
+@login_required(login_url='login')
+def validation_registrants(request):
+    registrants = UserCreationValidation.objects.all()
+    return render(request, 'confirming_registration.html', {
+        'registrants': registrants,
+    })
+
+
+@unauthenticated_user
 def register(request):
     notifications = Notification.objects.all()
     if request.user.is_authenticated:
@@ -386,6 +441,58 @@ def register(request):
                 return redirect('login')
 
     return render(request, 'register.html', {'form': form})
+
+
+@admin_group_required
+@login_required(login_url='login')
+def confirm_registration(request, username):
+    registrant = UserCreationValidation.objects.get(username=username)
+    user_created = User.objects.create(
+        username=registrant.username,
+        password=registrant.password,
+        email=registrant.email
+    )
+
+    group = Group.objects.get(id=registrant.group.id)
+    user_created.groups.add(group)
+    user_created.save()
+    registrant.delete()
+
+    new_user = User.objects.get(username=user_created.username)
+
+    if new_user.groups.filter(name='cashier').exists():
+        # Create a ScannedProducts Objects to address the scalability concern
+        cashier, created = ScannedProducts.objects.get_or_create(
+            cashier=new_user,
+            summed_product_price=0,
+        )
+        cashier.save()
+
+        scanned_product_header, created = ScannedProductHeader.objects.get_or_create(
+            cashier=new_user,
+        )
+        scanned_product_header.save()
+        # Let's Create a Product for the Registered Cashier so as not to tamper the original product's details
+        products = Product.objects.all()
+        for product in products:
+            dynamic_cashier_products = CashierDynamicProducts.objects.create(cashier=user_created,
+                                                                             name=product.name,
+                                                                             type=product.type,
+                                                                             barcode=product.barcode,
+                                                                             price=product.price,
+                                                                             expiry_date=product.expiry_date,
+                                                                             quantity=product.quantity,
+                                                                             scanned_quantity=0,
+                                                                             image=product.image,
+                                                                             )
+            dynamic_cashier_products.save()
+
+        # group = Group.objects.get(name='users')
+        # userForm.groups.add(group)
+
+        messages.success(request, 'Account successfully created ' + user_created.username)
+    messages.success(request, 'Account successfully created ' + user_created.username)
+    return redirect('login')
 
 
 def logout_user(request):
@@ -567,6 +674,7 @@ def update_scanned_products(request, username):
     return JsonResponse({'products': product_list})
 
 
+@allowed_users(allowed_roles=['cashier'])
 @login_required(login_url='login')
 def add_quantity_product(request, username, barcode):
 
@@ -596,6 +704,7 @@ def add_quantity_product(request, username, barcode):
         return redirect('scanned-products', username=user.username)
 
 
+@allowed_users(allowed_roles=['cashier'])
 @login_required(login_url='login')
 def subtract_quantity_product(request, username, barcode):
     user = User.objects.get(username=username)
@@ -625,6 +734,7 @@ def subtract_quantity_product(request, username, barcode):
         return redirect('scanned-products', username=user.username)
 
 
+@allowed_users(allowed_roles=['cashier'])
 @login_required(login_url='login')
 def remove_scanned_product(request, username, barcode):
     user = User.objects.get(username=username)
@@ -663,6 +773,7 @@ def remove_scanned_product(request, username, barcode):
         return redirect('scanned-products', username=user.username)
 
 
+@allowed_users(allowed_roles=['cashier'])
 @login_required(login_url='login')
 def sell_scanned_products(request, username):
     user = User.objects.get(username=username)
@@ -794,6 +905,7 @@ def add_dynamic_products(request, username):
     return redirect('homepage')
 
 
+@allowed_users(allowed_roles=['admin'])
 @login_required(login_url='login')
 def products_sold(request):
     notifications = Notification.objects.filter(removed=False)
@@ -804,6 +916,7 @@ def products_sold(request):
     })
 
 
+@allowed_users(allowed_roles=['admin'])
 @login_required(login_url='login')
 def expired_products(request):
     notifications = Notification.objects.filter(removed=False)
@@ -824,6 +937,7 @@ def expired_products(request):
     })
 
 
+@allowed_users(allowed_roles=['admin'])
 @login_required(login_url='login')
 def reports(request):
     notifications = Notification.objects.filter(removed=False)
@@ -832,6 +946,7 @@ def reports(request):
     })
 
 
+@allowed_users(allowed_roles=['admin'])
 @login_required(login_url='login')
 def sold_out_products(request):
     notifications = Notification.objects.filter(removed=False)
@@ -842,6 +957,7 @@ def sold_out_products(request):
     })
 
 
+@allowed_users(allowed_roles=['admin'])
 @login_required(login_url='login')
 def select_products_sell(request, username):
     notifications = Notification.objects.filter(removed=False)
@@ -894,6 +1010,72 @@ def select_products_sell(request, username):
     scanned_sum = scanned_length.aggregate(length_sum=Sum('scanned_length'))['length_sum']
 
     return render(request, 'select_sell_products.html', {
+        'products': products,
+        'default_quantity': default_quantity,
+        'scanned_products': scanned_products,
+        'product_types_list': product_types_list,
+        'product_types': product_types,
+        'notifications': notifications,
+        'scanned_sum': scanned_sum,
+        'default_cash': default_cash,
+        'total_price_scanned_products': total_price_scanned_products,
+        'scanned_products_header': scanned_products_header,
+    })
+
+
+@allowed_users(allowed_roles=['cashier'])
+@login_required(login_url='login')
+def select_products_sell_cashier_group(request, username):
+    notifications = Notification.objects.filter(removed=False)
+    cashier = User.objects.get(username=username)
+    products = CashierDynamicProducts.objects.filter(cashier=cashier)
+    scanned_products = ScannedProducts.objects.filter(cashier=cashier)
+    scanned_products_header = ScannedProductHeader.objects.get(cashier=cashier)
+    product_types = ProductType.objects.all()
+    default_quantity = 1
+    default_cash = 0
+
+    scanned_product = ScannedProducts.objects.get(cashier=cashier)
+    total_price_scanned_products = scanned_product.summed_product_price
+
+    if request.method == 'POST':
+        selected_products = request.POST.getlist('selectedProducts')
+        selected_products_quantity = request.POST.getlist(f'product-quantity')
+        scanned_product_list = ScannedProducts.objects.get(cashier=cashier)
+        scanned_product_list.product.add(*selected_products)
+        filtered_quantity = [value for value in selected_products_quantity if value]
+
+        for id, quantity in zip(selected_products, filtered_quantity):
+            product = CashierDynamicProducts.objects.get(id=id)
+            product.scanned_quantity += int(quantity)
+            scanned_product_list.summed_product_price += product.price * int(quantity)
+            product.quantity -= int(quantity)
+            product.save()
+
+            main_products = Product.objects.filter(name=product.name)
+            for main_product in main_products:
+                main_product.quantity = product.quantity
+                main_product.save()
+
+            dynamic_products = CashierDynamicProducts.objects.filter(name=product.name)
+            for dynamic_product in dynamic_products:
+                dynamic_product.quantity = product.quantity
+                dynamic_product.save()
+
+        scanned_product_list.save()
+
+    product_types_list = {}
+    for producto in products:
+        product_type = producto.type
+        if product_type not in product_types_list:
+            product_types_list[product_type] = [producto]
+        else:
+            product_types_list[product_type].append(producto)
+
+    scanned_length = ScannedProducts.objects.filter(cashier=cashier).annotate(scanned_length=Count('product'))
+    scanned_sum = scanned_length.aggregate(length_sum=Sum('scanned_length'))['length_sum']
+
+    return render(request, 'select_sell_products_cashier.html', {
         'products': products,
         'default_quantity': default_quantity,
         'scanned_products': scanned_products,
@@ -1036,6 +1218,7 @@ def seen_notifications(request):
         return JsonResponse({'status': 'error', 'message': str(e)})
 
 
+@allowed_users(allowed_roles=['cashier'])
 @login_required(login_url='login')
 def clear_scanned_header_change(request, username):
     cashier = User.objects.get(username=username)
@@ -1049,6 +1232,7 @@ def clear_scanned_header_change(request, username):
     })
 
 
+@allowed_users(allowed_roles=['encoder'])
 @login_required(login_url='login')
 def product_info(request, id):
     product = Product.objects.get(id=id)
@@ -1077,6 +1261,7 @@ def product_info(request, id):
     })
 
 
+@allowed_users(allowed_roles=['encoder'])
 @login_required(login_url='login')
 def products(request):
     notifications = Notification.objects.filter(removed=False)

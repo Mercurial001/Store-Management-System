@@ -36,6 +36,8 @@ urlpatterns = [
     path('products/sold-out/', views.sold_out_products, name='sold-out-products'),
     path('products/sold/', views.products_sold, name='sold-products'),
     path('products/select/<str:username>/', views.select_products_sell, name='select-sell'),
+    path('products/select/cashier/<str:username>/', views.select_products_sell_cashier_group,
+         name='select-sell-cashier'),
     path('test/<str:username>', views.update_scanned_products, name='test-update'),
     path('expired_products/', views.expired_products_json, name='expired-products-json'),
     path('delete-notification/<str:title>/<int:id>/', views.remove_notification, name='delete-notification'),
@@ -47,6 +49,9 @@ urlpatterns = [
          name='add-quantity'),
     path('subtract-quantity-htmx/<str:username>/<str:barcode>/', views.subtract_quantity_product,
          name='subtract-quantity'),
+    path('registration/', views.registration_validation, name='registration-validation'),
+    path('registrants-validation/', views.validation_registrants, name='registrant-validation'),
+    path('confirm_registration/<str:username>/', views.confirm_registration, name='confirm-registration')
     # path('htmx/sell/<str:username>/', views.tester, name='test'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

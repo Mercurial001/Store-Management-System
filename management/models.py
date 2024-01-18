@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 
 
 class ProductType(models.Model):
@@ -165,3 +165,12 @@ class TotalRevenue(models.Model):
     revenue = models.IntegerField(default=0)
     last_updated = models.DateField(blank=True, null=True)
     last_updated_time = models.DateTimeField(blank=True, null=True)
+
+
+class UserCreationValidation(models.Model):
+    username = models.CharField(max_length=255)
+    password = models.CharField(max_length=255)
+    email = models.EmailField()
+    group = models.ForeignKey(Group, related_name='user_group', on_delete=models.PROTECT)
+    date = models.DateField(auto_now_add=True)
+    date_time = models.DateTimeField(auto_now_add=True)

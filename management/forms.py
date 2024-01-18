@@ -1,9 +1,48 @@
-from .models import Product, ScannedProducts, CashierDynamicProducts, ProductType
+from .models import Product, ScannedProducts, CashierDynamicProducts, ProductType, UserCreationValidation
 from django.forms import Select, DateInput, Textarea, TextInput, ModelForm, SelectMultiple, NumberInput
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.contrib.auth import password_validation
+from django.utils.translation import gettext_lazy as _
+
+
+class RegistrationValidationForm(ModelForm):
+    password1 = forms.CharField(
+        label=_("Password"),
+        strip=False,
+        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password',
+                                          'class': 'registration_validation_field',
+                                          'placeholder': 'Password'}),
+        help_text=password_validation.password_validators_help_text_html(),
+    )
+    password2 = forms.CharField(
+        label=_("Password confirmation"),
+        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password',
+                                          'class': 'registration_validation_field',
+                                          'placeholder': 'Confirm Password'}),
+        strip=False,
+    )
+
+    class Meta:
+        model = UserCreationValidation
+        fields = [
+            'username', 'email', 'group'
+        ]
+        widgets = {
+            'username': TextInput(attrs={
+                'class': "registration_validation_field",
+                'placeholder': 'Username'
+            }),
+            'email': TextInput(attrs={
+                'class': "registration_validation_field",
+                'placeholder': 'Email Address'
+            }),
+            'group': Select(attrs={
+                'class': "registration_validation_select_field",
+            }),
+        }
 
 
 class ProductTypeForm(ModelForm):
