@@ -51,7 +51,12 @@ urlpatterns = [
          name='subtract-quantity'),
     path('registration/', views.registration_validation, name='registration-validation'),
     path('registrants-validation/', views.validation_registrants, name='registrant-validation'),
-    path('confirm_registration/<str:username>/', views.confirm_registration, name='confirm-registration')
+    path('confirm_registration/<str:username>/', views.confirm_registration, name='confirm-registration'),
+    path('download-income/', views.download_income_excel, name='income-excel'),
+    path('download-expenses/', views.download_expense_excel, name='expenses-excel'),
+    path('report/expenses/', views.expenses_page, name='expenses'),
+    path('report/income/', views.income_page, name='income'),
+    path('expense/detail/<int:id>/<str:expense_date>/', views.modify_expense_details, name='expense-details')
     # path('htmx/sell/<str:username>/', views.tester, name='test'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

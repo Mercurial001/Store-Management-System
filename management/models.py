@@ -141,7 +141,7 @@ class Income(models.Model):
     date_time = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        ordering = ['-date']
+        # ordering = ['-date']
         verbose_name_plural = 'Income'
 
 

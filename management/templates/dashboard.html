@@ -67,6 +67,8 @@
                     <canvas id="SoldPerProductsChartFiltered" width="1050" height="500"></canvas>
                     <canvas id="ProductsSoldDailyChartFiltered" width="1050" height="500"></canvas>
                     <canvas id="ProductsProfitDailyChartFiltered" width="1050" height="500"></canvas>
+                    <canvas id="ExpenseDailyChartFiltered" width="700" height="300"></canvas>
+                    <canvas id="IncomeDailyChartFiltered" width="700" height="300"></canvas>
                 {% elif not selected_type_sold_product %}
                     <canvas id="SoldPerProductsChart" width="700" height="300"></canvas>
                     <canvas id="ProductsSoldDailyChart" width="700" height="300"></canvas>
@@ -160,6 +162,44 @@
 
         // Define your data and labels
 
+        var sold_product_date_sold = {{  sold_product_profit_date|safe }};
+        var products_sold_profit = {{ summed_sold_product_revenue|safe }};
+
+        var dailyRevenueChart = document.getElementById('dailyRevenueChart').getContext('2d');
+
+        var profit_data = {
+          labels: sold_product_date_sold,
+          datasets: [{
+            label: 'Revenue',
+            data: products_sold_profit,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        };
+
+        var myRevenueChart = new Chart(dailyRevenueChart, {
+            type: 'line',
+            data: profit_data,
+            options: {
+            scales: {
+                x: {
+                    grid: {
+                        drawOnChartArea: false
+                        },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                }
+            }
+          }
+        });
+
+        // Define your data and labels
+
         var expense_date = {{ expense_date|safe }};
         var expenses = {{ expense_sum|safe }};
 
@@ -233,47 +273,10 @@
             }
           }
         });
+
+
     </script>
 
-    <script>
-        // Define your data and labels
-
-        var sold_product_date_sold = {{  sold_product_profit_date|safe }};
-        var products_sold_profit = {{ summed_sold_product_revenue|safe }};
-
-        var dailyRevenueChart = document.getElementById('dailyRevenueChart').getContext('2d');
-
-        var profit_data = {
-          labels: sold_product_date_sold,
-          datasets: [{
-            label: 'Revenue',
-            data: products_sold_profit,
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1
-          }]
-        };
-
-        var myRevenueChart = new Chart(dailyRevenueChart, {
-            type: 'line',
-            data: profit_data,
-            options: {
-            scales: {
-                x: {
-                    grid: {
-                        drawOnChartArea: false
-                        },
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        drawOnChartArea: false
-                    },
-                }
-            }
-          }
-        });
-    </script>
     <script>
         // Define your data and labels
 
@@ -350,8 +353,8 @@
         });
 
         // Filtered Daily Profit
-        var sold_product_date_sold_filtered = {{ sold_product_profit_date_filtered|safe }};
-        var products_sold_profit_filtered = {{ summed_sold_product_profit_filtered|safe }};
+        var sold_product_date_sold_filtered = {{ sold_product_revenue_date_filtered|safe }};
+        var products_sold_profit_filtered = {{ summed_sold_product_revenue_filtered|safe }};
 
         var dailyProductsProfitChartFiltered = document.getElementById('ProductsProfitDailyChartFiltered').getContext('2d');
 
@@ -359,6 +362,81 @@
           labels: sold_product_date_sold_filtered,
           datasets: [{
             label: 'Revenue (Filtered)',
+            data: products_sold_profit_filtered,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        };
+
+        var myChart = new Chart(dailyProductsProfitChartFiltered, {
+            type: 'line',
+            data: profit_data_filtered,
+            options: {
+            scales: {
+                x: {
+                    grid: {
+                        drawOnChartArea: false
+                        },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                }
+            }
+          }
+        });
+
+        // Filtered Daily Profit
+        var sold_product_date_sold_filtered = {{ expense_date_filtered|safe }};
+        var products_sold_profit_filtered = {{ expense_sum_filtered|safe }};
+
+        var dailyProductsProfitChartFiltered = document.getElementById('ExpenseDailyChartFiltered').getContext('2d');
+
+        var profit_data_filtered = {
+          labels: sold_product_date_sold_filtered,
+          datasets: [{
+            label: 'Expense (Filtered)',
+            data: products_sold_profit_filtered,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        };
+
+        var myChart = new Chart(dailyProductsProfitChartFiltered, {
+            type: 'line',
+            data: profit_data_filtered,
+            options: {
+            scales: {
+                x: {
+                    grid: {
+                        drawOnChartArea: false
+                        },
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                }
+            }
+          }
+        });
+
+
+        // Filtered Daily Profit
+        var sold_product_date_sold_filtered = {{ for_income_date_filtered|safe }};
+        var products_sold_profit_filtered = {{ income_array_filtered|safe }};
+
+        var dailyProductsProfitChartFiltered = document.getElementById('IncomeDailyChartFiltered').getContext('2d');
+
+        var profit_data_filtered = {
+          labels: sold_product_date_sold_filtered,
+          datasets: [{
+            label: 'Income (Filtered)',
             data: products_sold_profit_filtered,
             backgroundColor: 'rgba(75, 192, 192, 0.2)',
             borderColor: 'rgba(75, 192, 192, 1)',

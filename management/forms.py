@@ -1,4 +1,4 @@
-from .models import Product, ScannedProducts, CashierDynamicProducts, ProductType, UserCreationValidation
+from .models import Product, ScannedProducts, CashierDynamicProducts, ProductType, UserCreationValidation, Expenses
 from django.forms import Select, DateInput, Textarea, TextInput, ModelForm, SelectMultiple, NumberInput
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
@@ -6,6 +6,29 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
 from django.utils.translation import gettext_lazy as _
+
+
+class ExpenseDetailsEditForm(ModelForm):
+    class Meta:
+        model = Expenses
+        fields = ['expense', 'description', 'image']
+        widgets = {
+            'expense': NumberInput(attrs={
+                'class': "expense-data-field",
+                'placeholder': 'Product Name'
+            }),
+            'description': Textarea(attrs={
+                'class': "expense-data-field auto-growth",
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Make all fields not required
+        for field_name, field in self.fields.items():
+            field.required = False
+
 
 
 class RegistrationValidationForm(ModelForm):

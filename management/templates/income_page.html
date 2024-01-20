@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+    <a href="{% url 'income-excel' %}">Download Spreadsheet</a>
+    <table>
+        <tr>
+            <th>Amount</th>
+            <th>Date</th>
+        </tr>
+        {% for income in incomes %}
+            <tr>
+                <td>
+                    {{ income.income }}
+                </td>
+                <td>
+                    {{ income.date }}
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

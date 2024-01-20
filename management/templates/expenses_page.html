@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% load static %}
+    <link rel="stylesheet" href="{% static 'expense_page.css' %}">
+{% block content %}
+    <a href="{% url 'expenses-excel' %}">Download Spreadsheet</a>
+    <table>
+        <tr>
+            <th>Amount</th>
+            <th>Date</th>
+        </tr>
+        {% for expense in expenses %}
+                <tr>
+                    <td>
+                        <a href="{% url 'expense-details' expense.id expense.date_no_time %}">
+                            {{ expense.expense }}
+                        </a>
+                    </td>
+                    <td>
+                        {{ expense.date_no_time }}
+                    </td>
+                </tr>
+
+        {% endfor %}
+    </table>
+{% endblock %}

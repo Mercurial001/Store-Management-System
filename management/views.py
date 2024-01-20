@@ -3,14 +3,14 @@ from .models import Product, ScannedProducts, SoldProducts, CashierDynamicProduc
     SoldProductHub, ScannedProductHeader, SoldOutProduct, ProductType, Notification, Expenses, Revenue, Income, \
     UserCreationValidation
 from .forms import ProductForm, CreateUserForm, ScannedProductAddQuantityForm, ProductTypeForm, ChangeProductForm, \
-    RegistrationValidationForm
+    RegistrationValidationForm, ExpenseDetailsEditForm
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from .decorators import unauthenticated_user, admin_group_required
 from django.contrib.auth.models import Group, User
 from django.utils import timezone
 import cv2
-from django.http import StreamingHttpResponse, JsonResponse, HttpResponseRedirect, HttpResponseBadRequest
+from django.http import StreamingHttpResponse, JsonResponse, HttpResponseRedirect, HttpResponseBadRequest, \
+    HttpResponse
 from django.views.decorators import gzip
 from pyzbar.pyzbar import decode
 import winsound
@@ -22,19 +22,20 @@ from django.db.models import Q
 from .decorators import unauthenticated_user, allowed_users, admin_group_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import make_password
+from openpyxl import Workbook
 
 
-@allowed_users(allowed_roles=['admin'])
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['encoder'])
 def index(request):
     users = User.objects.all()
     product_form = ProductForm()
     product_type_form = ProductTypeForm()
     products = CashierDynamicProducts.objects.filter(cashier=1)
     notifications = Notification.objects.filter(removed=False)
-
     current_date = timezone.now()
     expense, created = Expenses.objects.get_or_create(date_no_time=current_date)
+    user_belongs_to_encoder = request.user.groups.filter(name='encoder').exists()
     expense.save()
 
     barcodes = []
@@ -93,6 +94,7 @@ def index(request):
         'barcodes': barcodes,
         'product_type_form': product_type_form,
         'notifications': notifications,
+        'user_belongs_to_encoder': user_belongs_to_encoder,
     })
 
 
@@ -197,7 +199,9 @@ def dashboard(request):
 
     sold_products_list_filtered = {}
     sold_products_date_filtered = {}
-    sold_products_profit_filtered = {}
+    sold_products_revenue_filtered = {}
+    expense_list_filtered = {}
+    income_array_filtered = {}
 
     if selected_month_sold_product or selected_cashier_sold_product or selected_type_sold_product:
 
@@ -242,14 +246,36 @@ def dashboard(request):
             cashier__username=selected_cashier_sold_product,
         )
 
-        sold_products_profit_filtered = {}
         for products in sold_products_profits:
             product_date = products.date_sold_no_time
             for product in products.product.all():
-                if product_date not in sold_products_profit_filtered:
-                    sold_products_profit_filtered[product_date] = [product.price]
+                if product_date not in sold_products_revenue_filtered:
+                    sold_products_revenue_filtered[product_date] = [product.price]
                 else:
-                    sold_products_profit_filtered[product_date].append(product.price)
+                    sold_products_revenue_filtered[product_date].append(product.price)
+
+        expenses_filtered = Expenses.objects.filter(
+            date_no_time__month=selected_month,
+            date_no_time__year=selected_year,
+        )
+        # expenses = Expenses.objects.all()
+        for expense in expenses_filtered:
+            expense_date = expense.date_no_time
+            if expense_date not in expense_list_filtered:
+                expense_list_filtered[expense_date] = [expense.expense]
+            else:
+                expense_list_filtered[expense_date].append(expense.expense)
+
+        incomes = Income.objects.filter(
+            date__month=selected_month,
+            date__year=selected_year,
+        )
+        for income in incomes:
+            income_date = income.date
+            if income_date not in income_array_filtered:
+                income_array_filtered[income_date] = [income.income]
+            else:
+                income_array_filtered[income_date].append(income.income)
 
     # Filtered Products Quantity
     summed_sold_products_quantities_filtered = [
@@ -266,12 +292,18 @@ def dashboard(request):
         product for product, quantity_list in sold_products_list_filtered.items()
     ]
     # Filtered Daily Profits
-    summed_sold_product_profit_filtered = [
-        sum(product_price) for product_date, product_price in sold_products_profit_filtered.items()
+    summed_sold_product_revenue_filtered = [
+        sum(product_price) for product_date, product_price in sold_products_revenue_filtered.items()
     ]
-    sold_product_profit_date_filtered = [
-        product_date.strftime('%Y-%m-%d') for product_date, product_price in sold_products_profit_filtered.items()
+    sold_product_revenue_date_filtered = [
+        product_date.strftime('%Y-%m-%d') for product_date, product_price in sold_products_revenue_filtered.items()
     ]
+
+    expense_sum_filtered = [sum(expense) for expense_date, expense in expense_list_filtered.items()]
+    expense_date_filtered = [expense_date.strftime('%Y-%m-%d') for expense_date, expense in expense_list_filtered.items()]
+
+    daily_income_filtered = [sum(income) for date, income in income_array_filtered.items()]
+    daily_income_date_filtered = [date.strftime('%Y-%m-%d') for date, income in income_array_filtered.items()]
 
     revenue_list = {}
     revenues = SoldProducts.objects.all()
@@ -320,8 +352,83 @@ def dashboard(request):
         'summed_sold_products_quantities_filtered': summed_sold_products_quantities_filtered,
         'product_sold_date_filtered': product_sold_date_filtered,
         # Filtered Dashboard Data Daily Profits
-        'summed_sold_product_profit_filtered': summed_sold_product_profit_filtered,
-        'sold_product_profit_date_filtered': sold_product_profit_date_filtered,
+        'summed_sold_product_revenue_filtered': summed_sold_product_revenue_filtered,
+        'sold_product_revenue_date_filtered': sold_product_revenue_date_filtered,
+        # Filtered Dashboard Data Expenses
+        'expense_sum_filtered': expense_sum_filtered,
+        'expense_date_filtered': expense_date_filtered,
+        # Filtered Income
+        'income_array_filtered': daily_income_filtered,
+        'for_income_date_filtered': daily_income_date_filtered,
+
+    })
+
+
+def download_income_excel(request):
+    # Query the Income model to get the data
+    incomes = Income.objects.all().order_by('-date')
+
+    # Create a new Excel workbook and add a worksheet
+    wb = Workbook()
+    ws = wb.active
+
+    # Add headers to the worksheet
+    headers = ['Income', 'Date']
+    ws.append(headers)
+
+    # Add data to the worksheet
+    for income in incomes:
+        row_data = [income.income, income.date.strftime('%Y-%m-%d')]
+        ws.append(row_data)
+
+    # Create a response object with the appropriate content type for Excel files
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=income_data.xlsx'
+
+    # Save the workbook to the response object
+    wb.save(response)
+
+    return response
+
+
+def download_expense_excel(request):
+    # Query the Income model to get the data
+    expenses = Expenses.objects.all().order_by('-date_no_time')
+
+    # Create a new Excel workbook and add a worksheet
+    wb = Workbook()
+    ws = wb.active
+
+    # Add headers to the worksheet
+    headers = ['Amount', 'Date']
+    ws.append(headers)
+
+    # Add data to the worksheet
+    for expense in expenses:
+        row_data = [expense.expense, expense.date_no_time.strftime('%Y-%m-%d')]
+        ws.append(row_data)
+
+    # Create a response object with the appropriate content type for Excel files
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=expenses_data.xlsx'
+
+    # Save the workbook to the response object
+    wb.save(response)
+
+    return response
+
+
+def expenses_page(request):
+    expenses = Expenses.objects.all().order_by('-date_no_time')
+    return render(request, 'expenses_page.html', {
+        'expenses': expenses,
+    })
+
+
+def income_page(request):
+    incomes = Income.objects.all().order_by('-date')
+    return render(request, 'income_page.html', {
+        'incomes': incomes,
     })
 
 
@@ -334,7 +441,10 @@ def authentication(request):
         user = authenticate(username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('homepage')
+            if user.groups.filter(name='cashier').exists():
+                return redirect('select-sell-cashier', username=username)
+            else:
+                return redirect('homepage')
         else:
             messages.error(request, "Invalid Form Data")
 
@@ -344,7 +454,6 @@ def authentication(request):
 
 
 @unauthenticated_user
-@login_required(login_url='login')
 def registration_validation(request):
     if request.method == 'POST':
         form = RegistrationValidationForm(request.POST)
@@ -1237,6 +1346,7 @@ def clear_scanned_header_change(request, username):
 def product_info(request, id):
     product = Product.objects.get(id=id)
     product_form = ChangeProductForm(instance=product)
+    user_belongs_to_encoder = request.user.groups.filter(name='encoder').exists()
     if request.method == 'POST':
         form = ChangeProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
@@ -1258,12 +1368,33 @@ def product_info(request, id):
     return render(request, 'product_profile.html', {
         'product': product,
         'product_form': product_form,
+        'user_belongs_to_encoder': user_belongs_to_encoder,
+    })
+
+
+def modify_expense_details(request, id, expense_date):
+    formatted_date = datetime.strptime(expense_date, '%Y-%m-%d')
+    expense = Expenses.objects.get(id=id, date_no_time=formatted_date)
+
+    if request.method == 'POST':
+        form = ExpenseDetailsEditForm(request.POST, request.FILES, instance=expense)
+        expense_details = form.save(commit=False)
+        expense.expense = expense_details.expense
+        expense.description = expense_details.description
+        expense.image = expense_details.image
+        expense.save()
+
+    expense_form = ExpenseDetailsEditForm(instance=expense)
+    return render(request, 'expense_detail.html', {
+        'expense': expense,
+        'expense_form': expense_form,
     })
 
 
 @allowed_users(allowed_roles=['encoder'])
 @login_required(login_url='login')
 def products(request):
+    user_belongs_to_encoder = request.user.groups.filter(name='encoder').exists()
     notifications = Notification.objects.filter(removed=False)
     products = Product.objects.all()
     product_types_list = {}
@@ -1276,5 +1407,6 @@ def products(request):
     return render(request, 'products.html', {
         'product_types_list': product_types_list,
         'notifications': notifications,
+        'user_belongs_to_encoder': user_belongs_to_encoder,
     })
 

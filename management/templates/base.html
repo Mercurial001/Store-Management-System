@@ -16,15 +16,18 @@
     <link rel="stylesheet" href="{% static 'authentication.css' %}">
     <link rel="stylesheet" href="{% static 'register.css' %}">
     <link rel="stylesheet" href="{% static 'dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'expense_detail.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link href='https://fonts.googleapis.com/css?family=Lato:100italic' rel='stylesheet' type='text/css'>
     <link href='https://fonts.googleapis.com/css?family=Lato:100' rel='stylesheet' type='text/css'>
     <script src="{% static 'jquery-3.7.1.min.js' %}"></script>
     <script src="{% static 'htmx.js' %}"></script>
+    <script src="{% static 'autogrow.js' %}"></script>
+
 </head>
 <body>
     <header id="main-header">
-        {% if request.user.is_authenticated %}
+        {% if request.user.is_authenticated and request.user.is_superuser %}
         <div class="main-header-link-container-div">
             <a href="{% url 'homepage' %}">Home</a>
         </div>
@@ -39,6 +42,55 @@
         </div>
         <div class="main-header-link-container-div">
             <a href="{% url 'dashboard' %}">Dashboard</a>
+        </div>
+        <div class="main-header-link-container-div">
+            <a href="{% url 'products' %}">Products</a>
+        </div>
+        <div class="main-header-link-container-div">
+            <a href="{% url 'registrant-validation' %}">Registrants</a>
+        </div>
+        <div class="main-header-link-container-div" id="notification-toggle">
+            <div class="notification-counter-div">
+
+            </div>
+            Notification
+        </div>
+        {% csrf_token %}
+        <div class="notification-list" id="notification-list">
+            {% for notification in notifications %}
+                <div class="notification">
+                    <div class="notification-title">
+                        {{ notification.title }}
+                    </div>
+                    <div class="notification-date-time">
+                        {{ notification.date_time | naturaltime }}
+                    </div>
+                    <div class="notification-message">
+                        {{ notification.message }}
+                    </div>
+                    <div class="notification-delete-div">
+                        <a class="notification-delete"
+                           href="{% url 'delete-notification' notification.title notification.id %}">
+                            Remove Notification
+                        </a>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="notification-empty-notifier">
+                    No Notification
+                </div>
+            {% endfor %}
+        </div>
+        <div class="main-header-link-container-div">
+            <a href="{% url 'logout' %}">Logout</a>
+        </div>
+        {% elif not request.user.is_authenticated %}
+        <div class="main-header-link-container-div">
+            <a href="{% url 'logout' %}">Login</a>
+        </div>
+        {% elif user_belongs_to_encoder %}
+        <div class="main-header-link-container-div">
+            <a href="{% url 'homepage' %}">Home</a>
         </div>
         <div class="main-header-link-container-div">
             <a href="{% url 'products' %}">Products</a>
@@ -77,10 +129,6 @@
         </div>
         <div class="main-header-link-container-div">
             <a href="{% url 'logout' %}">Logout</a>
-        </div>
-        {% else %}
-        <div class="main-header-link-container-div">
-            <a href="{% url 'login' %}">Login</a>
         </div>
         {% endif %}
     </header>
@@ -152,6 +200,9 @@
 
         {% endblock %}
     </div>
+    <script>
+        autosize(document.querySelectorAll('.auto-growth'));
+    </script>
     <script>
 
         document.addEventListener('DOMContentLoaded', function() {
